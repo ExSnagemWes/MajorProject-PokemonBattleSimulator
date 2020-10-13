@@ -1,11 +1,11 @@
-// Project Title
-// Your Name
-// Date
+// Pokemon Battle Simulator
+// Trent Hatzel
+// Started September 23, 2020
 //
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 //https://github.com/smogon/damage-calc/blob/master/calc/src/mechanics/gen12.ts(line 157)
-//line 255 equation copied and slightly modified for variables that would be predefined in this instance
+//line 255 damage equation copied and slightly modified for variables that would be predefined in this instance
 
 //Convenience. Pressing shift constantly really slows me down
 let playerParty;
@@ -14,6 +14,7 @@ let physical = "ph"
 let special = "sp"
 let healing = "heal"
 let boost = "boost"
+
 let normal = "Normal";
 let bug = "Bug";
 let grass = "Grass";
@@ -249,10 +250,11 @@ let moves_list = {
   
 //let damage = 0;
 let pokemon = {
-  dragonite: {
+dragonite: {
     name: "Dragonite",
     //sprites: [loadImage("sprites/dragonite_front.png"), loadImage("sprites/dragonite_back.png")],
     status: 0,
+    base_hp: 356,
     hp: 356,
     attack: 403,
     defense: 226,
@@ -278,6 +280,7 @@ garchomp: {
   name: "Garchomp",
   //sprites: [loadImage("sprites/garchomp_front.png"), loadImage("sprites/garchomp_back.png")],
   status: 0,
+  base_hp: 357,
   hp: 357,
   attack: 359,
   defense: 226,
@@ -302,6 +305,7 @@ charizard: {
   name: "Charizard",
   //sprites: [loadImage("sprites/charizard_front.png"), loadImage("sprites/charizard_back.png")],
   status: 0,
+  base_hp: 297,
   hp: 297,
   attack: 155,
   defense: 192,
@@ -326,6 +330,7 @@ blastoise: {
   name: "Blastoise",
   //sprites: [loadImage("sprites/blastoise_front.png"), loadImage("sprites/blastoise_back.png")],
   status: 0,
+  base_hp: 362,
   hp: 362,
   attack: 153,
   defense: 236,
@@ -350,6 +355,7 @@ venusaur: {
   name: "Venusaur",
   //sprites: [loadImage("sprites/venusaur_front.png"), loadImage("sprites/venusaur_back.png")],
   status: 0,
+  base_hp: 363,
   hp: 363,
   attack: 152,
   defense: 202,
@@ -374,6 +380,7 @@ articuno: {
   name: "Articuno",
   //sprites: [loadImage("sprites/articuno_front.png"), loadImage("sprites/articuno_back.png")],
   status: 0,
+  base_hp: 379,
   hp: 379,
   attack: 157,
   defense: 236,
@@ -395,7 +402,7 @@ articuno: {
     moves_list.freeze_dry]
   }
 }
-
+let pokemon_list = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno]
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -404,7 +411,6 @@ function setup() {
 }
 
 function draw() {
-  background(220);
   //kill: console.log(pokemon.charizard.hp>damage_check(pokemon.dragonite, pokemon.charizard, pokemon.dragonite.moves[0])
   //raw damage: console.log(damage_check(pokemon.dragonite, pokemon.charizard, pokemon.dragonite.move_1))
 
@@ -413,8 +419,10 @@ function draw() {
 
 function damage_check(user, target, move){
   if (move.accuracy < random(100)){
-    return "missed";
+    return 0;
   }
+  let user_state = user;
+  let target_state = target;
   let crit_chance = 1;
   let damage;
   let effects_list = [0,
@@ -425,11 +433,11 @@ function damage_check(user, target, move){
   //3 Flinches target
   (target.status = concat("flinch")),
   //4 Increases Attack
-  (user.stat_changes.attack ++),
+  (user.stat_changes.attack + move.effect[1]),
   //5 Burns Target
   (target.status = "burned"),
   //6 Lowers Sp. Def of target
-  (target.stat_changes.sp_def --),
+  (target.stat_changes.sp_def - move.effect[1]),
   //7 Freezes Target
   (target.status = "frozen"),
   //8 Poisons Target
@@ -439,6 +447,8 @@ function damage_check(user, target, move){
   //10 Freeze Dry
   (damage *= freeze_dry_check(target))
 ]
+  user = user_state;
+  target = target_state;
 
   if (move.category === physical){
     damage = Math.floor(
@@ -471,6 +481,9 @@ function damage_check(user, target, move){
 
   if (move.effect[1] > random(100)){
     effects_list[move.effect[0]];
+    if (target.stat_changes.attack < -6){
+
+    }
   }
 
   damage *= (type_effect(target.type_1, move.type) * type_effect(target.type_2, move.type))
@@ -718,7 +731,7 @@ function find_best_damage(user, target){
   for (let i = 0; i<user.moves.length; i++){
     damage_holder.push(damage_check(user, target, user.moves[i]))
   }
-  return damage_holder
+  //return damage_holder
   if (damage_holder[0] === max(damage_holder)){
    return 0;
   }
@@ -735,14 +748,42 @@ function find_best_damage(user, target){
 
 class Party {
   constructor(){
-    this.slot_1 = random(pokemon),
-    this.slot_2 = random(pokemon),
-    this.slot_3 = random(pokemon),
-    this.slot_4 = random(pokemon),
-    this.slot_5 = random(pokemon),
-    this.slot_6 = random(pokemon)
+    this.slot_1 = random(pokemon_list),
+    this.slot_2 = random(pokemon_list),
+    this.slot_3 = random(pokemon_list),
+    this.slot_4 = random(pokemon_list),
+    this.slot_5 = random(pokemon_list),
+    this.slot_6 = random(pokemon_list)
   }
   summary(){
-    text(this.slot_1)
+    let temporary_party_list = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6];
+    let offset = mouseY;
+    for (let i = 0; i<6; i++){
+      textFont("Courier New")
+      //image(temporary_party_list[i].sprites[1], mouseX-80, offset, 80, 80)
+      textStyle(BOLD)
+      text(temporary_party_list[i].name+"      Lvl. 100", mouseX, offset-10)
+      text("HP: "+temporary_party_list[i].hp, mouseX+100, offset+5)
+      text("Attack: "+temporary_party_list[i].attack, mouseX+100, offset+15)
+      text("Defense: "+temporary_party_list[i].defense, mouseX+100, offset+25)
+      text("Sp. Atk: "+temporary_party_list[i].sp_atk, mouseX+100, offset+35)
+      text("Sp. Def: "+temporary_party_list[i].sp_def, mouseX+100, offset+45)
+      text("Speed: "+temporary_party_list[i].speed, mouseX+100, offset+55)
+      textStyle(ITALIC)
+      text(temporary_party_list[i].type_1, mouseX,offset+10)
+      text(temporary_party_list[i].type_2, mouseX+(temporary_party_list[i].type_1.length*8),offset+10)
+      textStyle(NORMAL)
+      if (temporary_party_list[i].status !== 0){
+        text(temporary_party_list[i].status, mouseX, offset)}
+      text(temporary_party_list[i].moves[0].name, mouseX, offset+25)
+      text(temporary_party_list[i].moves[1].name, mouseX, offset+35)
+      text(temporary_party_list[i].moves[2].name, mouseX, offset+45)
+      text(temporary_party_list[i].moves[3].name, mouseX, offset+55)
+      offset += 80;
+    }
   }
+}
+
+function mouseClicked(){
+  playerParty.summary()
 }
