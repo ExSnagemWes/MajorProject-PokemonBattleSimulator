@@ -1,0 +1,21 @@
+September:
+
+23:
+Type Effectiveness Calculator created
+
+24: Garchomp, Dragonite added (and respective moves)
+
+25: Charizard added, started damage_calculator, Blastoise added (and respective moves)
+
+28: damage_calculator finished
+
+29: Blastoise added (and respective moves), refined Pokemon Data format (Added Stat Change list, added name attribute)
+
+October:
+
+2: Venusaur added, Articuno Added (and respective moves), (and respective moves), damage_calculator adjusted (implemented physical/special damage split)
+
+4: Added Party class
+
+9: Discovered bug when using Party class with damage_calculator (damage_calculator output stacks with repeated usage)
+
