@@ -746,6 +746,18 @@ function find_best_damage(user, target){
    }
 }
 
+function find_best_pokemon(user_party, target){
+  let best_damage = 0;
+  let best_choice = 0
+  for (let i = 0; i<6; i++){
+    let attack_damage = damage_check(user_party.base_list[i], target, user_party.base_list[i].moves[find_best_damage(user_party.base_list[i], target)])
+    if (attack_damage > best_damage){
+      best_choice = i
+    }
+  }
+  return best_choice
+}
+
 class Party {
   constructor(){
     this.slot_1 = random(pokemon_list),
@@ -753,7 +765,8 @@ class Party {
     this.slot_3 = random(pokemon_list),
     this.slot_4 = random(pokemon_list),
     this.slot_5 = random(pokemon_list),
-    this.slot_6 = random(pokemon_list)
+    this.slot_6 = random(pokemon_list),
+    this.base_list = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6]
   }
   summary(){
     let temporary_party_list = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6];
@@ -770,6 +783,7 @@ class Party {
       text("Sp. Def: "+temporary_party_list[i].sp_def, mouseX+100, offset+45)
       text("Speed: "+temporary_party_list[i].speed, mouseX+100, offset+55)
       textStyle(ITALIC)
+      textStyle()
       text(temporary_party_list[i].type_1, mouseX,offset+10)
       text(temporary_party_list[i].type_2, mouseX+(temporary_party_list[i].type_1.length*8),offset+10)
       textStyle(NORMAL)
