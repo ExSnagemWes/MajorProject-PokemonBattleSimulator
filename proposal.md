@@ -7,8 +7,7 @@
 *Pokémon* Data<br>
 Move Data<br>
 Simple AI System<br>
-Sprite Display Program<br>
-Basic Move Animations<p/>
+Sprite Display Program<p/>
 
 
 ### **Optional Content:**

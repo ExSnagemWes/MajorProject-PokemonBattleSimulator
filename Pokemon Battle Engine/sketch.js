@@ -540,7 +540,6 @@ function damage_check(attacker, defender, move, isBattle){
           defender.status = "Confused"}
         if (move.effect[0] === 2){
           //2 Heals 1/2 Max Health
-          attacker.hp += (attacker.base_hp/2)
           return "healed"}
         if (move.effect[0] === 3){
           //3 Flinches defender
@@ -865,7 +864,7 @@ function turn_in_action(player, cpu, player_attack, cpu_attack){
       }
     }
   }
-  if (player.speed > cpu.speed){
+  else if (player.speed > cpu.speed){
     //Player Moves first
     let player_output = damage_check(player, cpu, player_attack, true)
       //player attack
@@ -936,7 +935,16 @@ function turn_data_check(move_result, attacker, defender, move){
   if (attacking === true){
     //Move disabled false
     console.log(attacker.name+" used "+move.name+"!")
-    if (move_result === "missed"){
+    //animations.get(move.name)
+    //animation input
+    if (move_result === "healed"){
+      attacker.hp += Math.floor(attacker.base_hp/2)
+      if(attacker.hp> attacker.base_hp){
+        attacker.hp = attacker.base_hp
+      }
+      console.log(attacker.name+" regained health!")
+    }
+    else if (move_result === "missed"){
       console.log("It's attack missed.")
     }
     else{
@@ -946,17 +954,19 @@ function turn_data_check(move_result, attacker, defender, move){
         defender.status = "Fainted";
       }
       let effectiveness = (type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type))
-      while (keyIsPressed === false){
-        if (effectiveness > 1.1){
-          console.log("It's super effective!")
-        }
-        else if(effectiveness === 0){
-          console.log("It doesn't effect "+defender.name+"...")
-        }
-        else if(effectiveness < 0.9){
-          console.log("It's not very effective!")
-        }
+      if (move.name === "Freeze Dry"){
+        effectiveness *= freeze_dry_check(defender)
       }
+      if (effectiveness > 1.1){
+        console.log("It's super effective!")
+      }
+      else if(effectiveness === 0){
+        console.log("It doesn't effect "+defender.name+"...")
+      }
+      else if(effectiveness < 0.9){
+        console.log("It's not very effective!")
+      }
+      
     }
   }
   if (defender.hp === 0){
