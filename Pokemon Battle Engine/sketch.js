@@ -10,6 +10,8 @@
 //Convenience. Pressing shift constantly really slows me down
 let playerParty;
 let cpuParty;
+let activePlayer;
+let activeCPU
 let physical = "ph"
 let special = "sp"
 let healing = "heal"
@@ -429,6 +431,8 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   playerParty = new Party();
   cpuParty = new Party();
+  activePlayer = playerParty.slot_1
+  activeCPU = cpuParty.slot_1
 }
 
 function draw() {
@@ -443,8 +447,6 @@ function draw() {
 
 
 function damage_check(attacker, defender, move, isBattle){
-  let attacker_state = attacker;
-  let defender_state = defender;
   let crit_chance = 1;
   let damage;
   if (isBattle === false){
@@ -452,9 +454,6 @@ function damage_check(attacker, defender, move, isBattle){
       return 0;
     }
   }
-  
-  attacker = attacker_state;
-  defender = defender_state;
   
   if (move.category === physical){
     damage = Math.floor(
@@ -489,7 +488,7 @@ function damage_check(attacker, defender, move, isBattle){
     //9 Status check
     damage *= hex_check(defender)}
   if (move.effect[0] === 10){
-    //10 Freeze Dry
+    //10 Freeze Dry (Super Effective against Water, in spite of Ice Type being resisted)
     damage *= freeze_dry_check(defender)}
   
   damage *= (type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type))
@@ -521,8 +520,9 @@ function damage_check(attacker, defender, move, isBattle){
         return "frozen";
       }
     }
-    if (move.accuracy < random(100)){
-      return "missed";
+    if (move.accuracy!== 0){
+      if (move.accuracy < random(100)){
+        return "missed";}
     }
     if (attacker.status === "Confused"){
       if (Math.round(random(2))===1){
@@ -839,33 +839,11 @@ function find_best_pokemon(attacker_party, defender){
 }
 
 function turn_in_action(player, cpu, player_attack, cpu_attack){
+  console.log("Initiated")
   //implement paralysis speed drop
-  // if (player_attack.priority !== cpu_attack.priority){
-  //   if (player_attack.priority > cpu_attack.priority){
-  //     let player_output = damage_check(player, cpu, player_attack, true)
-  //     //player attack
-  //     turn_data_check(player_output, player, cpu, player_attack)
-
-  //     if (cpu.hp>0){
-  //       let cpu_output = damage_check(cpu, player, cpu_attack, true)
-  //       //cpu attack
-  //       turn_data_check(cpu_output, cpu, player, cpu_attack)
-  //     }
-  //   }
-  //   else{
-  //     let cpu_output = damage_check(cpu, player, cpu_attack, true)
-  //       //cpu attack
-  //       turn_data_check(cpu_output, cpu, player, cpu_attack)
-
-  //     if (player.hp>0){
-  //       let player_output = damage_check(player, cpu, player_attack, true)
-  //     //player attack
-  //     turn_data_check(player_output, player, cpu, player_attack)
-  //     }
-  //   }
-  // }
-  if (player.speed > cpu.speed){
-    let player_output = damage_check(player, cpu, player_attack, true)
+  if (player_attack.priority !== cpu_attack.priority){
+    if (player_attack.priority > cpu_attack.priority){
+      let player_output = damage_check(player, cpu, player_attack, true)
       //player attack
       turn_data_check(player_output, player, cpu, player_attack)
 
@@ -875,19 +853,54 @@ function turn_in_action(player, cpu, player_attack, cpu_attack){
         turn_data_check(cpu_output, cpu, player, cpu_attack)
       }
     }
-  else{
-    let cpu_output = damage_check(cpu, player, cpu_attack, true)
+    else{
+      let cpu_output = damage_check(cpu, player, cpu_attack, true)
         //cpu attack
         turn_data_check(cpu_output, cpu, player, cpu_attack)
 
       if (player.hp>0){
         let player_output = damage_check(player, cpu, player_attack, true)
       //player attack
-      turn_data_check(player_output, player, cpu, player_attack)}
+      turn_data_check(player_output, player, cpu, player_attack)
+      }
+    }
+  }
+  if (player.speed > cpu.speed){
+    //Player Moves first
+    let player_output = damage_check(player, cpu, player_attack, true)
+      //player attack
+      turn_data_check(player_output, player, cpu, player_attack)
+      
+      if (cpu.hp>0){
+        let cpu_output = damage_check(cpu, player, cpu_attack, true)
+        //cpu attack
+        turn_data_check(cpu_output, cpu, player, cpu_attack)
+      }
+    }
+  else{
+    //CPU Moves first
+    let cpu_output = damage_check(cpu, player, cpu_attack, true)
+    //cpu attack
+    turn_data_check(cpu_output, cpu, player, cpu_attack)
+
+    if (player.hp>0){
+      let player_output = damage_check(player, cpu, player_attack, true)
+    //player attack
+    turn_data_check(player_output, player, cpu, player_attack)}
+  }
+
+  if (cpu.status === "Fainted"){
+    console.log("CPU was defeated. Nice.")
+    // find_best_pokemon(cpuParty, player)
+  }
+
+  if (player.status === "Fainted"){
+    console.log("Select your next Pokemon")
   }
 }
 
 function turn_data_check(move_result, attacker, defender, move){
+  //Attack Initialized")
   let attacking = true
   if (attacker.status === "thawed"){
     console.log(attacker.name+" thawed from the ice.");
@@ -919,8 +932,9 @@ function turn_data_check(move_result, attacker, defender, move){
     console.log("It's fully paralyzed!");
     attacking = false;
   }
-  
-  if (attacking === "true"){
+  //Move Disabled checked
+  if (attacking === true){
+    //Move disabled false
     console.log(attacker.name+" used "+move.name+"!")
     if (move_result === "missed"){
       console.log("It's attack missed.")
@@ -932,14 +946,16 @@ function turn_data_check(move_result, attacker, defender, move){
         defender.status = "Fainted";
       }
       let effectiveness = (type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type))
-      if (effectiveness < 1){
-        console.log("It's super effective!")
-      }
-      else if(effectiveness === 0){
-        console.log("It doesn't effect "+defender.name+"...")
-      }
-      else if(effectiveness > 1){
-        console.log("It's not very effective!")
+      while (keyIsPressed === false){
+        if (effectiveness > 1.1){
+          console.log("It's super effective!")
+        }
+        else if(effectiveness === 0){
+          console.log("It doesn't effect "+defender.name+"...")
+        }
+        else if(effectiveness < 0.9){
+          console.log("It's not very effective!")
+        }
       }
     }
   }
