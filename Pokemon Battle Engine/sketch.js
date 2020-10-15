@@ -426,34 +426,13 @@ articuno: {
     moves_list.freeze_dry]
   }
 }
-let pokemon_list = [
-  // [
-  pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno]
-  // ,[pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno],
-  // [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno]
-// ]
-
-let duplicator = new Map()
-duplicator.set(pokemon_list, pokemon_list)
-duplicator.set(pokemon, pokemon)
-//duplicator
-let new_pokemon_lists=[]
-let pokemon_backups=[]
-
-for(let i = 0; i<2; i++){
-  
-  new_pokemon_lists.push(duplicator.get(pokemon_list))
-  pokemon_backups.push(duplicator.get(pokemon))}
-  for(let j = 0; j<pokemon_list.length; j++){
-    duplicator.set(pokemon, pokemon_backups)
-    new_pokemon_lists[i][j] = duplicator.get(pokemon)
-  }
-
-
+let pokemon_list = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno]
+// let pokemon_list_player = pokemon_list;
+// let pokemon_list_cpu = pokemon_list;
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  playerParty = new Party(1);
-  cpuParty = new Party(2);
+  playerParty = new Party();
+  cpuParty = new Party();
   activePlayer = playerParty.slot_1
   activeCPU = cpuParty.slot_1
 }
@@ -866,7 +845,7 @@ function find_best_pokemon(attacker_party, defender){
 }
 
 function turn_in_action(player, cpu, player_attack, cpu_attack){
-  let turn_result = ["The battle begins", ]
+  let turn_result = []
   //implement paralysis speed drop
   if (player_attack.priority !== cpu_attack.priority){
     if (player_attack.priority > cpu_attack.priority){
@@ -1039,13 +1018,13 @@ function turn_data_check(move_result, attacker, defender, move){
 
 
 class Party {
-  constructor(list){
-    this.slot_1 = random(new_pokemon_lists[list]),
-    this.slot_2 = random(new_pokemon_lists[list]),
-    this.slot_3 = random(new_pokemon_lists[list]),
-    this.slot_4 = random(new_pokemon_lists[list]),
-    this.slot_5 = random(new_pokemon_lists[list]),
-    this.slot_6 = random(new_pokemon_lists[list]),
+  constructor(){
+    this.slot_1 = random(pokemon_list),
+    this.slot_2 = random(pokemon_list),
+    this.slot_3 = random(pokemon_list),
+    this.slot_4 = random(pokemon_list),
+    this.slot_5 = random(pokemon_list),
+    this.slot_6 = random(pokemon_list),
     this.base_list = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6]
   }
   summary(x, y){

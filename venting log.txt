@@ -1,0 +1,7 @@
+So I need to redirect the pokemon selector to the appropriate list
+I have it set to choose whichever list# is defined by function variable LIST in constructor
+I need to make these new lists redirect to the backup pokemon data instead of the primary data
+
+I seem to be unable to do this.
+
+so that failed. second idea: just make it so no duplicates can appear. this means i need to program in another 6 pokemon before progressing further.
