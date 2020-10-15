@@ -16,6 +16,7 @@ let physical = "ph"
 let special = "sp"
 let healing = "heal"
 let boost = "boost"
+let new_status = false
 
 let normal = "Normal";
 let bug = "Bug";
@@ -425,12 +426,34 @@ articuno: {
     moves_list.freeze_dry]
   }
 }
-let pokemon_list = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno]
+let pokemon_list = [
+  // [
+  pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno]
+  // ,[pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno],
+  // [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno]
+// ]
+
+let duplicator = new Map()
+duplicator.set(pokemon_list, pokemon_list)
+duplicator.set(pokemon, pokemon)
+//duplicator
+let new_pokemon_lists=[]
+let pokemon_backups=[]
+
+for(let i = 0; i<2; i++){
+  
+  new_pokemon_lists.push(duplicator.get(pokemon_list))
+  pokemon_backups.push(duplicator.get(pokemon))}
+  for(let j = 0; j<pokemon_list.length; j++){
+    duplicator.set(pokemon, pokemon_backups)
+    new_pokemon_lists[i][j] = duplicator.get(pokemon)
+  }
+
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  playerParty = new Party();
-  cpuParty = new Party();
+  playerParty = new Party(1);
+  cpuParty = new Party(2);
   activePlayer = playerParty.slot_1
   activeCPU = cpuParty.slot_1
 }
@@ -546,18 +569,23 @@ function damage_check(attacker, defender, move, isBattle){
           defender.flinch = true}
         if (move.effect[0] === 4){
           //4 Increases Attack
-          attacker.stat_changes.attack + move.effect[1]}
+          attacker.stat_changes.attack + move.effect[1]
+          return "boost"}
         if (move.effect[0] === 5){
           //5 Burns defender
+          new_status = true
           defender.status = "Burned"}
         if (move.effect[0] === 6){
           //6 Lowers Sp. Def of defender
+          new_status = true
           defender.stat_changes.sp_def - move.effect[1]}
         if (move.effect[0] === 7){
           //7 Freezes defender
+          new_status = true
           defender.status = "Frozen"}
         if (move.effect[0] === 8){
           //8 Poisons defender
+          new_status = true
           defender.status = "Poisoned"}        
       }
     }
@@ -838,29 +866,29 @@ function find_best_pokemon(attacker_party, defender){
 }
 
 function turn_in_action(player, cpu, player_attack, cpu_attack){
-  console.log("Initiated")
+  let turn_result = ["The battle begins", ]
   //implement paralysis speed drop
   if (player_attack.priority !== cpu_attack.priority){
     if (player_attack.priority > cpu_attack.priority){
       let player_output = damage_check(player, cpu, player_attack, true)
       //player attack
-      turn_data_check(player_output, player, cpu, player_attack)
+      turn_result.push(turn_data_check(player_output, player, cpu, player_attack))
 
-      if (cpu.hp>0){
-        let cpu_output = damage_check(cpu, player, cpu_attack, true)
-        //cpu attack
-        turn_data_check(cpu_output, cpu, player, cpu_attack)
-      }
+    if (cpu.hp>0){
+      let cpu_output = damage_check(cpu, player, cpu_attack, true)
+      //cpu attack
+      turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack))
+     }
     }
     else{
       let cpu_output = damage_check(cpu, player, cpu_attack, true)
         //cpu attack
-        turn_data_check(cpu_output, cpu, player, cpu_attack)
+        turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack))
 
       if (player.hp>0){
         let player_output = damage_check(player, cpu, player_attack, true)
-      //player attack
-      turn_data_check(player_output, player, cpu, player_attack)
+        //player attack
+        turn_result.push(turn_data_check(player_output, player, cpu, player_attack))
       }
     }
   }
@@ -868,47 +896,52 @@ function turn_in_action(player, cpu, player_attack, cpu_attack){
     //Player Moves first
     let player_output = damage_check(player, cpu, player_attack, true)
       //player attack
-      turn_data_check(player_output, player, cpu, player_attack)
+      turn_result.push(turn_data_check(player_output, player, cpu, player_attack))
       
       if (cpu.hp>0){
         let cpu_output = damage_check(cpu, player, cpu_attack, true)
         //cpu attack
-        turn_data_check(cpu_output, cpu, player, cpu_attack)
+        turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack))
       }
     }
   else{
     //CPU Moves first
     let cpu_output = damage_check(cpu, player, cpu_attack, true)
     //cpu attack
-    turn_data_check(cpu_output, cpu, player, cpu_attack)
+    turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack))
 
     if (player.hp>0){
       let player_output = damage_check(player, cpu, player_attack, true)
-    //player attack
-    turn_data_check(player_output, player, cpu, player_attack)}
+      //player attack
+      turn_result.push(turn_data_check(player_output, player, cpu, player_attack))}
   }
 
   if (cpu.status === "Fainted"){
-    console.log("CPU was defeated. Nice.")
+    turn_result.push("CPU was defeated. Nice.")
     // find_best_pokemon(cpuParty, player)
   }
 
   if (player.status === "Fainted"){
-    console.log("Select your next Pokemon")
+    turn_result.push("Select your next Pokemon")
   }
+  return turn_result;
 }
 
 function turn_data_check(move_result, attacker, defender, move){
   //Attack Initialized")
+  let turn_result = []
   let attacking = true
   if (attacker.status === "thawed"){
-    console.log(attacker.name+" thawed from the ice.");
+    turn_result.push(attacker.name+ " thawed from the ice.")
+    
     attacker.status = 0;}
   if (attacker.status === "woke"){
-    console.log(attacker.name+" woke up!");
+    turn_result.push([attacker.name+ " woke up!"])
+    
     attacker.status = 0;}
   if (attacker.status === "sleep"){
-    console.log("It's fast asleep!");
+    turn_result.push("It's fast asleep!")
+    
     attacker.status_timer --;
     attacking = false
     if (attacker.status_timer === 0){
@@ -916,11 +949,13 @@ function turn_data_check(move_result, attacker, defender, move){
     }
   }
   if (attacker.status === "confused"){
-    console.log(attacker.name +" is confused!")
+    turn_result.push(attacker.name + " is confused!")
+    
   }
   if (move_result === "confused"){
     attacker.hp =- damage_check(attacker, attacker, moves_list.struggle, true)
-    console.log("It hurt itself in it's confusion!")
+    turn_result.push("It hurt itself in it's confusion!")
+    
     attacking = false;
     if (attacker.hp < 0){
       attacker.hp = 0;
@@ -928,13 +963,15 @@ function turn_data_check(move_result, attacker, defender, move){
     }
   }
   if (move_result === "paralyzed"){
-    console.log("It's fully paralyzed!");
+    turn_result.push("It's fully paralyzed!")
+    
     attacking = false;
   }
   //Move Disabled checked
   if (attacking === true){
     //Move disabled false
-    console.log(attacker.name+" used "+move.name+"!")
+    turn_result.push([attacker.name+ " used ",move.name , "!"])
+    
     //animations.get(move.name)
     //animation input
     if (move_result === "healed"){
@@ -942,10 +979,17 @@ function turn_data_check(move_result, attacker, defender, move){
       if(attacker.hp> attacker.base_hp){
         attacker.hp = attacker.base_hp
       }
-      console.log(attacker.name+" regained health!")
+      turn_result.push(attacker.name+ " regained health!")
+     
+    }
+    else if (move_result === "boost"){
+      if (move.name ==="Swords Dance"){
+        turn_result.push(attacker.name, "'s Attack Sharply increased!")     
+      }
     }
     else if (move_result === "missed"){
-      console.log("It's attack missed.")
+      turn_result.push("It's attack missed.")
+     
     }
     else{
       defender.hp -= move_result;
@@ -958,24 +1002,36 @@ function turn_data_check(move_result, attacker, defender, move){
         effectiveness *= freeze_dry_check(defender)
       }
       if (effectiveness > 1.1){
-        console.log("It's super effective!")
+        turn_result.push("It's super effective!")
+       
       }
       else if(effectiveness === 0){
-        console.log("It doesn't effect "+defender.name+"...")
+        turn_result.push("It doesn't effect "+defender.name+ "...")
+       
       }
       else if(effectiveness < 0.9){
-        console.log("It's not very effective!")
+        turn_result.push("It's not very effective!")
+       
       }
-      
+      if (critical === true){
+        turn_result.push("Critical hit!")
+       
+        critical = false
+      }
     }
   }
   if (defender.hp === 0){
-    console.log(defender.name+" fainted!")
+    turn_result.push(defender.name+ " fainted!")
+    
   }
   if (attacker.hp === 0){
-    console.log(attacker.name+" fainted!")
+    turn_result.push(attacker.name+ " fainted!")
+    
   }
-
+  if (new_status === true){
+    turn_result.push(defender.name+" was "+defender.status+"!")
+  }
+  return turn_result;
 }
 
 
@@ -983,13 +1039,13 @@ function turn_data_check(move_result, attacker, defender, move){
 
 
 class Party {
-  constructor(){
-    this.slot_1 = random(pokemon_list),
-    this.slot_2 = random(pokemon_list),
-    this.slot_3 = random(pokemon_list),
-    this.slot_4 = random(pokemon_list),
-    this.slot_5 = random(pokemon_list),
-    this.slot_6 = random(pokemon_list),
+  constructor(list){
+    this.slot_1 = random(new_pokemon_lists[list]),
+    this.slot_2 = random(new_pokemon_lists[list]),
+    this.slot_3 = random(new_pokemon_lists[list]),
+    this.slot_4 = random(new_pokemon_lists[list]),
+    this.slot_5 = random(new_pokemon_lists[list]),
+    this.slot_6 = random(new_pokemon_lists[list]),
     this.base_list = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6]
   }
   summary(x, y){
@@ -999,7 +1055,7 @@ class Party {
       textFont("Courier New")
       //image(temporary_party_list[i].sprites[1], x-80, offset, 80, 80)
       textStyle(BOLD)
-      text(temporary_party_list[i].name+"       Lvl. 100", x, offset-10)
+      text(temporary_party_list[i].name+ "       Lvl. 100", x, offset-10)
       text("HP: "+temporary_party_list[i].hp+"/"+temporary_party_list[i].base_hp, x+110, offset+5)
       text("Attack: "+temporary_party_list[i].attack, x+110, offset+15)
       text("Defense: "+temporary_party_list[i].defense, x+110, offset+25)
