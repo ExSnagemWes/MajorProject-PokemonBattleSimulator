@@ -7,17 +7,19 @@
 //https://github.com/smogon/damage-calc/blob/master/calc/src/mechanics/gen12.ts(line 157)(line 211)
 //line 255 damage equation copied and slightly modified for variables that would be predefined in this instance
 
-//Convenience. Pressing shift constantly really slows me down
 let playerParty;
 let cpuParty;
 let activePlayer;
-let activeCPU
-let physical = "ph"
-let special = "sp"
-let healing = "heal"
-let boost = "boost"
-let new_status = false
+let activeCPU;
+let physical = "ph";
+let special = "sp";
+let healing = "heal";
+let boost = "boost";
+let new_status = false;
+let new_confused = 0;
 
+//Convenience. Pressing shift constantly really slows me down
+//defines Pokemon Types
 let normal = "Normal";
 let bug = "Bug";
 let grass = "Grass";
@@ -202,16 +204,6 @@ let moves_list = {
     priority: 0,
     effect: [8,30]},
 
-  energy_ball: {
-    name: "Energy Ball",
-    type: grass,
-    power: 90,
-    accuracy: 100,
-    pp: 10,
-    category: special,
-    priority: 0,
-    effect: [6,20]},
-
   synthesis: {
     name: "Synthesis",
     type: grass,
@@ -258,23 +250,30 @@ let moves_list = {
     category: physical,
     priority: 0,
     effect: [0,0]},
-  }
+};
   
 //let damage = 0;
 let pokemon = {
-dragonite: {
+  dragonite: {
     name: "Dragonite",
     //sprites: [loadImage("sprites/dragonite_front.png"), loadImage("sprites/dragonite_back.png")],
     status: 0,
+    bound: false,
+    bound_by: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
     flinch: false,
-    status_timer: 0,
+    statusTimer: 0,
     base_hp: 356,
     hp: 356,
     attack: 403,
     defense: 226,
     sp_atk: 266,
     sp_def: 236,
-    //128 speed IVS
     speed: 176,
     stat_changes: {
       attack: 0,
@@ -289,159 +288,198 @@ dragonite: {
       moves_list.hurricane, 
       moves_list.extreme_speed, 
       moves_list.roost]
-},
-garchomp: {
-  name: "Garchomp",
-  //sprites: [loadImage("sprites/garchomp_front.png"), loadImage("sprites/garchomp_back.png")],
-  status: 0,
-  flinch: false,
-  status_timer: 0,
-  base_hp: 357,
-  hp: 357,
-  attack: 359,
-  defense: 226,
-  sp_atk: 176,
-  sp_def: 207,
-  speed: 333,
-  stat_changes: {
-    attack: 0,
-    defense: 0,
-    sp_atk: 0,
-    sp_def: 0,
-    speed: 0
   },
-  type_1: dragon,
-  type_2: ground,
-  moves: [moves_list.dragon_claw,
-    moves_list.earthquake,
-    moves_list.iron_head,
-    moves_list.swords_dance]
-},
-charizard: {
-  name: "Charizard",
-  //sprites: [loadImage("sprites/charizard_front.png"), loadImage("sprites/charizard_back.png")],
-  status: 0,
-  flinch: false,
-  status_timer: 0,
-  base_hp: 297,
-  hp: 297,
-  attack: 155,
-  defense: 192,
-  sp_atk: 317,
-  sp_def: 207,
-  speed: 328,
-  stat_changes: {
-    attack: 0,
-    defense: 0,
-    sp_atk: 0,
-    sp_def: 0,
-    speed: 0
+  garchomp: {
+    name: "Garchomp",
+    //sprites: [loadImage("sprites/garchomp_front.png"), loadImage("sprites/garchomp_back.png")],
+    status: 0,
+    bound: false,
+    bound_by: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
+    flinch: false,
+    statusTimer: 0,
+    base_hp: 357,
+    hp: 357,
+    attack: 359,
+    defense: 226,
+    sp_atk: 176,
+    sp_def: 207,
+    speed: 333,
+    stat_changes: {
+      attack: 0,
+      defense: 0,
+      sp_atk: 0,
+      sp_def: 0,
+      speed: 0
+    },
+    type_1: dragon,
+    type_2: ground,
+    moves: [moves_list.dragon_claw,
+      moves_list.earthquake,
+      moves_list.iron_head,
+      moves_list.swords_dance]
   },
-  type_1: fire,
-  type_2: flying,
-  moves: [moves_list.flamethrower,
-    moves_list.dragon_pulse,
-    moves_list.air_slash,
-    moves_list.focus_blast]
-},
-blastoise: {
-  name: "Blastoise",
-  //sprites: [loadImage("sprites/blastoise_front.png"), loadImage("sprites/blastoise_back.png")],
-  status: 0,
-  flinch: false,
-  status_timer: 0,
-  base_hp: 362,
-  hp: 362,
-  attack: 153,
-  defense: 236,
-  sp_atk: 295,
-  sp_def: 247,
-  speed: 192,
-  stat_changes: {
-    attack: 0,
-    defense: 0,
-    sp_atk: 0,
-    sp_def: 0,
-    speed: 0
+  charizard: {
+    name: "Charizard",
+    //sprites: [loadImage("sprites/charizard_front.png"), loadImage("sprites/charizard_back.png")],
+    status: 0,
+    bound: false,
+    bound_by: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
+    flinch: false,
+    statusTimer: 0,
+    base_hp: 297,
+    hp: 297,
+    attack: 155,
+    defense: 192,
+    sp_atk: 317,
+    sp_def: 207,
+    speed: 328,
+    stat_changes: {
+      attack: 0,
+      defense: 0,
+      sp_atk: 0,
+      sp_def: 0,
+      speed: 0
+    },
+    type_1: fire,
+    type_2: flying,
+    moves: [moves_list.flamethrower,
+      moves_list.dragon_pulse,
+      moves_list.air_slash,
+      moves_list.focus_blast]
   },
-  type_1: water,
-  type_2: none,
-  moves: [moves_list.hydro_pump,
-    moves_list.dragon_pulse,
-    moves_list.ice_beam,
-    moves_list.aura_sphere]
+  blastoise: {
+    name: "Blastoise",
+    //sprites: [loadImage("sprites/blastoise_front.png"), loadImage("sprites/blastoise_back.png")],
+    status: 0,
+    bound: false,
+    bound_by: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
+    flinch: false,
+    statusTimer: 0,
+    base_hp: 362,
+    hp: 362,
+    attack: 153,
+    defense: 236,
+    sp_atk: 295,
+    sp_def: 247,
+    speed: 192,
+    stat_changes: {
+      attack: 0,
+      defense: 0,
+      sp_atk: 0,
+      sp_def: 0,
+      speed: 0
+    },
+    type_1: water,
+    type_2: none,
+    moves: [moves_list.hydro_pump,
+      moves_list.dragon_pulse,
+      moves_list.ice_beam,
+      moves_list.aura_sphere]
   },
-venusaur: {
-  name: "Venusaur",
-  //sprites: [loadImage("sprites/venusaur_front.png"), loadImage("sprites/venusaur_back.png")],
-  status: 0,
-  flinch: false,
-  status_timer: 0,
-  base_hp: 363,
-  hp: 363,
-  attack: 152,
-  defense: 202,
-  sp_atk: 328,
-  sp_def: 237,
-  speed: 198,
-  stat_changes: {
-    attack: 0,
-    defense: 0,
-    sp_atk: 0,
-    sp_def: 0,
-    speed: 0
+  venusaur: {
+    name: "Venusaur",
+    //sprites: [loadImage("sprites/venusaur_front.png"), loadImage("sprites/venusaur_back.png")],
+    status: 0,
+    bound: false,
+    bound_by: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
+    flinch: false,
+    statusTimer: 0,
+    base_hp: 363,
+    hp: 363,
+    attack: 152,
+    defense: 202,
+    sp_atk: 328,
+    sp_def: 237,
+    speed: 198,
+    stat_changes: {
+      attack: 0,
+      defense: 0,
+      sp_atk: 0,
+      sp_def: 0,
+      speed: 0
+    },
+    type_1: grass,
+    type_2: poison,
+    moves: [moves_list.synthesis,
+      moves_list.energy_ball,
+      moves_list.sludge_bomb,
+      moves_list.venoshock]
   },
-  type_1: grass,
-  type_2: poison,
-  moves: [moves_list.synthesis,
-    moves_list.energy_ball,
-    moves_list.sludge_bomb,
-    moves_list.venoshock]
-  },
-articuno: {
-  name: "Articuno",
-  //sprites: [loadImage("sprites/articuno_front.png"), loadImage("sprites/articuno_back.png")],
-  status: 0,
-  flinch: false,
-  status_timer: 0,
-  base_hp: 379,
-  hp: 379,
-  attack: 157,
-  defense: 236,
-  sp_atk: 317,
-  sp_def: 286,
-  speed: 212,
-  stat_changes: {
-    attack: 0,
-    defense: 0,
-    sp_atk: 0,
-    sp_def: 0,
-    speed: 0
-  },
-  type_1: ice,
-  type_2: flying,
-  moves: [moves_list.hurricane,
-    moves_list.blizzard,
-    moves_list.roost,
-    moves_list.freeze_dry]
+  articuno: {
+    name: "Articuno",
+    //sprites: [loadImage("sprites/articuno_front.png"), loadImage("sprites/articuno_back.png")],
+    status: 0,
+    bound: false,
+    bound_by: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
+    flinch: false,
+    statusTimer: 0,
+    base_hp: 379,
+    hp: 379,
+    attack: 157,
+    defense: 236,
+    sp_atk: 317,
+    sp_def: 286,
+    speed: 212,
+    stat_changes: {
+      attack: 0,
+      defense: 0,
+      sp_atk: 0,
+      sp_def: 0,
+      speed: 0
+    },
+    type_1: ice,
+    type_2: flying,
+    moves: [moves_list.hurricane,
+      moves_list.blizzard,
+      moves_list.roost,
+      moves_list.freeze_dry]
   }
-}
-let pokemon_list = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno]
-// let pokemon_list_player = pokemon_list;
-// let pokemon_list_cpu = pokemon_list;
+};
+let pokemon_list = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno];
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   playerParty = new Party();
   cpuParty = new Party();
-  activePlayer = playerParty.slot_1
-  activeCPU = cpuParty.slot_1
+  activePlayer = playerParty.slot_1;
+  activeCPU = cpuParty.slot_1;
 }
 
 function draw() {
-    background(255)
-    noSmooth();
-    playerParty.summary(0,20)
-    cpuParty.summary(width-200,20)
+  background(255);
+  noSmooth();
+  playerParty.summary(0,20);
+  cpuParty.summary(width-200,20);
   //kill: console.log(pokemon.charizard.hp>damage_check(pokemon.dragonite, pokemon.charizard, pokemon.dragonite.moves[0])
   //raw damage: console.log(damage_check(pokemon.dragonite, pokemon.charizard, pokemon.dragonite.move_1))
 
@@ -459,43 +497,45 @@ function damage_check(attacker, defender, move, isBattle){
   
   if (move.category === physical){
     damage = Math.floor(
-      Math.floor((42 * attacker.attack * move.power) / defender.defense) / 50);
-      if (attacker.status === "burned" && move.category === physical){
-        damage *= 0.5;
-      }
-      if (attacker.stat_changes.attack >= 0){
-        damage *= 1 + (attacker.stat_changes.attack * 0.5)
-      }
-      if (defender.stat_changes.defense <= -1){
-        damage *= 1 + (defender.stat_changes.defense * -0.5)
-      }
+      Math.floor(42 * attacker.attack * move.power / defender.defense) / 50);
+    if (attacker.status === "burned" && move.category === physical){
+      damage *= 0.5;
+    }
+    if (attacker.stat_changes.attack >= 0){
+      damage *= 1 + attacker.stat_changes.attack * 0.5;
+    }
+    if (defender.stat_changes.defense <= -1){
+      damage *= 1 + defender.stat_changes.defense * -0.5;
+    }
       
-      // if (attacker.stat_changes.attack <=-1){
-        //   damage *= 1 + (attacker.stat_changes.attack * fix equation)
-        // }
-      }
+    // if (attacker.stat_changes.attack <=-1){
+    //   damage *= 1 + (attacker.stat_changes.attack * fix equation)
+    // }
+  }
   else if (move.category === special){
     damage = Math.floor(
-      Math.floor((42 * attacker.sp_atk * move.power) / defender.sp_def) / 50);
+      Math.floor(42 * attacker.sp_atk * move.power / defender.sp_def) / 50);
       
-      if (attacker.stat_changes.sp_atk >= 0){
-        damage *= 1 + (attacker.stat_changes.sp_atk * 0.5)
-      }
-      if (defender.stat_changes.sp_def <= -1){
-        damage *= 1 + (defender.stat_changes.sp_def * -0.5)
-      }
+    if (attacker.stat_changes.sp_atk >= 0){
+      damage *= 1 + attacker.stat_changes.sp_atk * 0.5;
     }
+    if (defender.stat_changes.sp_def <= -1){
+      damage *= 1 + defender.stat_changes.sp_def * -0.5;
+    }
+  }
     
   if (move.effect[0] === 9){
     //9 Status check
-    damage *= hex_check(defender)}
+    damage *= hex_check(defender);
+  }
   if (move.effect[0] === 10){
     //10 Freeze Dry (Super Effective against Water, in spite of Ice Type being resisted)
-    damage *= freeze_dry_check(defender)}
+    damage *= freeze_dry_check(defender);
+  }
   
-  damage *= (type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type))
+  damage *= type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type);
   
-  if ((move.type === attacker.type_1)||(move.type === attacker.type_2)){
+  if (move.type === attacker.type_1||move.type === attacker.type_2){
     damage *= 1.5;
   }
   if (isBattle === true){
@@ -507,11 +547,11 @@ function damage_check(attacker, defender, move, isBattle){
     }
     if (attacker.flinch){
       attacker.flinch = false;
-      return "Flinched"
+      return "Flinched";
     }
     if (attacker.status === "Paralyzed"){
       if (Math.round(random(3))===1){
-        return "paralyzed"
+        return "paralyzed";
       }
     }
     if (attacker.status === "Frozen"){
@@ -524,61 +564,76 @@ function damage_check(attacker, defender, move, isBattle){
     }
     if (move.accuracy!== 0){
       if (move.accuracy < random(100)){
-        return "missed";}
+        return "missed";
+      }
     }
     if (attacker.status === "Confused"){
-      if (Math.round(random(2))===1){
-        return "confused"
+      attacker.confusedTimer --;
+      if (attacker.confusedTimer >0){
+        if (Math.round(random(2))===1){
+          return "confused";
+        }
       }
+      
     }
     if (crit_chance>random(16)){
       damage *= 1.5;
-      critical = true
+      critical = true;
     }
     if (!(move.effect[0] === 9 || move.effect[0] === 10)){
       if(move.effect[1]>random(100)){
         if (move.effect[0] === 1){
           //1 Confuses defender
-          defender.status = "Confused"}
+          defender.confused = true;
+          defender.confusedTimer = random(2,5);
+          new_confused = 1;
+        }
         if (move.effect[0] === 2){
           //2 Heals 1/2 Max Health
-          return "healed"}
+          return "healed";
+        }
         if (move.effect[0] === 3){
           //3 Flinches defender
-          defender.flinch = true}
+          defender.flinch = true;
+        }
+        
         if (move.effect[0] === 4){
           //4 Increases Attack
-          attacker.stat_changes.attack + move.effect[1]
-          return "boost"}
-        if (move.effect[0] === 5){
+          attacker.stat_changes.attack + move.effect[1];
+          return "boost";
+        }
+        if (move.effect[0] === 5 || defender.status === 0){
           //5 Burns defender
-          new_status = true
-          defender.status = "Burned"}
+          new_status = true;
+          defender.status = "Burned";
+        }
         if (move.effect[0] === 6){
           //6 Lowers Sp. Def of defender
-          new_status = true
-          defender.stat_changes.sp_def - move.effect[1]}
-        if (move.effect[0] === 7){
+          defender.stat_changes.sp_def - move.effect[1];
+        }
+        if (move.effect[0] === 7 || defender.status === 0){
           //7 Freezes defender
-          new_status = true
-          defender.status = "Frozen"}
-        if (move.effect[0] === 8){
+          new_status = true;
+          defender.status = "Frozen";
+        }
+        if (move.effect[0] === 8 || defender.status === 0){
           //8 Poisons defender
-          new_status = true
-          defender.status = "Poisoned"}        
+          new_status = true;
+          defender.status = "Poisoned";
+        }        
       }
     }
     
     //
-    damage = Math.floor((damage * random(217, 255)) / 255)
-    }
+    damage = Math.floor(damage * random(217, 255) / 255);
+  }
     
   else{
     //Produces the minimal damage value for a more careful AI
-    damage = Math.floor(damage * (217/255))
+    damage = Math.floor(damage * (217/255));
   }
   return Math.floor(damage);
-  }
+}
       
 function type_effect(pokemon_type, move_type){
   if (pokemon_type === normal){
@@ -792,8 +847,8 @@ function type_effect(pokemon_type, move_type){
     return 1;
   }
   console.log("Error: TYPE data unknown");
-  console.log("The Defender type is "+ pokemon_type)
-  console.log("The Attack Type is " + move_type)
+  console.log("The Defender type is "+ pokemon_type);
+  console.log("The Attack Type is " + move_type);
 
 }
 
@@ -814,126 +869,156 @@ function hex_check(defender){
 function find_best_damage(attacker, defender){
   let damage_holder = [];
   for (let i = 0; i<attacker.moves.length; i++){
-    damage_holder.push(damage_check(attacker, defender, attacker.moves[i], false))
+    damage_holder.push(damage_check(attacker, defender, attacker.moves[i], false));
   }
   //return damage_holder
   if (damage_holder[0] === max(damage_holder)){
-   return 0;
+    return 0;
   }
   else if (damage_holder[1] === max(damage_holder)){
     return 1;
-   }
+  }
   else if (damage_holder[2] === max(damage_holder)){
     return 2;
-   }
+  }
   else if (damage_holder[3] === max(damage_holder)){
     return 3;
-   }
-  console.log("The Damage outputs are "+damage_holder)
+  }
+  console.log("Error: Unknown damage output");
+  console.log("The Damage outputs are "+damage_holder);
 }
 
 function find_best_pokemon(attacker_party, defender){
   let best_damage = 0;
-  let best_choice = 0
+  let best_choice = 0;
   for (let i = 0; i<6; i++){
-    let attack_damage = damage_check(attacker_party.base_list[i], defender, attacker_party.base_list[i].moves[find_best_damage(attacker_party.base_list[i], defender)], false)
+    let attack_damage = damage_check(attacker_party.base_list[i], defender, attacker_party.base_list[i].moves[find_best_damage(attacker_party.base_list[i], defender)], false);
     if (attack_damage > best_damage){
-      best_choice = i
+      best_choice = i;
     }
   }
-  return best_choice
+  return best_choice;
 }
 
 function turn_in_action(player, cpu, player_attack, cpu_attack){
-  let turn_result = []
+  let turn_result = [];
+  let playerModdedSpeed = player.speed;
+  let cpuModdedSpeed = cpu.speed;
+  if (player.status === "Paralyzed"){
+    playerModdedSpeed *= 0.5;
+  }
+  if (player.stat_changes.speed > 0){
+    playerModdedSpeed += player.stat_changes.speed * (0.5*playerModdedSpeed);
+  }
+  else if (player.stat_changes.speed < 0) {
+    if (cpu.status === "Paralyzed"){
+      cpuModdedSpeed *= 0.5;
+    }
+  }
   //implement paralysis speed drop
   if (player_attack.priority !== cpu_attack.priority){
     if (player_attack.priority > cpu_attack.priority){
-      let player_output = damage_check(player, cpu, player_attack, true)
+      let player_output = damage_check(player, cpu, player_attack, true);
       //player attack
-      turn_result.push(turn_data_check(player_output, player, cpu, player_attack))
+      turn_result.push(turn_data_check(player_output, player, cpu, player_attack));
 
-    if (cpu.hp>0){
-      let cpu_output = damage_check(cpu, player, cpu_attack, true)
-      //cpu attack
-      turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack))
-     }
+      if (cpu.hp>0){
+        let cpu_output = damage_check(cpu, player, cpu_attack, true);
+        //cpu attack
+        turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
+      }
     }
     else{
-      let cpu_output = damage_check(cpu, player, cpu_attack, true)
-        //cpu attack
-        turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack))
+      let cpu_output = damage_check(cpu, player, cpu_attack, true);
+      //cpu attack
+      turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
 
       if (player.hp>0){
-        let player_output = damage_check(player, cpu, player_attack, true)
+        let player_output = damage_check(player, cpu, player_attack, true);
         //player attack
-        turn_result.push(turn_data_check(player_output, player, cpu, player_attack))
+        turn_result.push(turn_data_check(player_output, player, cpu, player_attack));
       }
     }
   }
-  else if (player.speed > cpu.speed){
+  else if (playerModdedSpeed > cpuModdedSpeed){
     //Player Moves first
-    let player_output = damage_check(player, cpu, player_attack, true)
-      //player attack
-      turn_result.push(turn_data_check(player_output, player, cpu, player_attack))
-      
-      if (cpu.hp>0){
-        let cpu_output = damage_check(cpu, player, cpu_attack, true)
-        //cpu attack
-        turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack))
-      }
+    let player_output = damage_check(player, cpu, player_attack, true);
+    //player attack
+    turn_result.push(turn_data_check(player_output, player, cpu, player_attack));
+    
+    if (cpu.hp>0){
+      let cpu_output = damage_check(cpu, player, cpu_attack, true);
+      //cpu attack
+      turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
     }
+  }
   else{
     //CPU Moves first
-    let cpu_output = damage_check(cpu, player, cpu_attack, true)
+    let cpu_output = damage_check(cpu, player, cpu_attack, true);
     //cpu attack
-    turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack))
+    turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
 
     if (player.hp>0){
-      let player_output = damage_check(player, cpu, player_attack, true)
+      let player_output = damage_check(player, cpu, player_attack, true);
       //player attack
-      turn_result.push(turn_data_check(player_output, player, cpu, player_attack))}
+      turn_result.push(turn_data_check(player_output, player, cpu, player_attack));
+    }
   }
 
   if (cpu.status === "Fainted"){
-    turn_result.push("CPU was defeated. Nice.")
+    turn_result.push("CPU was defeated!");
+    turn_result.push("CPU: You should be wearing shorts. They're soft and comfortable and easy to move in!");
     // find_best_pokemon(cpuParty, player)
   }
 
   if (player.status === "Fainted"){
-    turn_result.push("Select your next Pokemon")
+    turn_result.push("Select your next Pokemon");
   }
   return turn_result;
 }
 
 function turn_data_check(move_result, attacker, defender, move){
-  //Attack Initialized")
-  let turn_result = []
-  let attacking = true
-  if (attacker.status === "thawed"){
-    turn_result.push(attacker.name+ " thawed from the ice.")
+  //Starts by checking if status ailments would inhibit attacking (decided in the isBattle portion of damage_check)
+  let turn_result = [];
+  let attacking = true;
+  if (move_result === "frozen"){
+    turn_result.push("It's frozen solid!");
     
-    attacker.status = 0;}
-  if (attacker.status === "woke"){
-    turn_result.push([attacker.name+ " woke up!"])
-    
-    attacker.status = 0;}
-  if (attacker.status === "sleep"){
-    turn_result.push("It's fast asleep!")
-    
-    attacker.status_timer --;
-    attacking = false
-    if (attacker.status_timer === 0){
-      attacker.status === "woke";
-    }
+    attacking = false;
   }
-  if (attacker.status === "confused"){
-    turn_result.push(attacker.name + " is confused!")
+  if (attacker.status === "thawed"){
+    turn_result.push(attacker.name+ " thawed from the ice!");
+    
+    attacker.status = 0;
+  }
+
+  if (attacker.status === "Sleeping"){
+    //Checks if it is time to wake up, then responds accordingly
+    if (attacker.statusTimer === 0){
+      turn_result.push([attacker.name+ " woke up!"]);
+      attacker.status = 0;
+    }
+    else{
+      turn_result.push("It's fast asleep!");
+      attacking = false;
+    }  
+  }
+
+  
+
+  if (attacker.confused === true){
+    if (attacker.confusedTimer === 0){
+      turn_result.push(attacker.name+" snapped out of it's confusion!");
+      attacker.confused = false;
+    }
+    else{
+      turn_result.push(attacker.name + " is confused!");
+    }
     
   }
   if (move_result === "confused"){
-    attacker.hp =- damage_check(attacker, attacker, moves_list.struggle, true)
-    turn_result.push("It hurt itself in it's confusion!")
+    attacker.hp =- damage_check(attacker, attacker, moves_list.struggle, true);
+    turn_result.push("It hurt itself in it's confusion!");
     
     attacking = false;
     if (attacker.hp < 0){
@@ -942,32 +1027,36 @@ function turn_data_check(move_result, attacker, defender, move){
     }
   }
   if (move_result === "paralyzed"){
-    turn_result.push("It's fully paralyzed!")
+    turn_result.push("It's fully paralyzed!");
     
     attacking = false;
   }
+  
   //Move Disabled checked
-  if (attacking === true){
-    //Move disabled false
-    turn_result.push([attacker.name+ " used ",move.name , "!"])
-    
-    //animations.get(move.name)
-    //animation input
+  if (!(move.category === physical || move.category === special)){
     if (move_result === "healed"){
-      attacker.hp += Math.floor(attacker.base_hp/2)
+      attacker.hp += Math.floor(attacker.base_hp/2);
       if(attacker.hp> attacker.base_hp){
-        attacker.hp = attacker.base_hp
+        attacker.hp = attacker.base_hp;
       }
-      turn_result.push(attacker.name+ " regained health!")
+      turn_result.push(attacker.name+ " regained health!");
      
     }
     else if (move_result === "boost"){
       if (move.name ==="Swords Dance"){
-        turn_result.push(attacker.name, "'s Attack Sharply increased!")     
+        turn_result.push(attacker.name, "'s Attack Sharply increased!")  ;   
       }
     }
-    else if (move_result === "missed"){
-      turn_result.push("It's attack missed.")
+    attacking = false;
+  }
+  if (attacking === true){
+    //Move disabled false
+    turn_result.push([attacker.name+ " used ",move.name , "!"]);
+    
+    //animations.get(move.name)
+    //animation input
+    if (move_result === "missed"){
+      turn_result.push("It's attack missed.");
      
     }
     else{
@@ -976,41 +1065,79 @@ function turn_data_check(move_result, attacker, defender, move){
         defender.hp = 0;
         defender.status = "Fainted";
       }
-      let effectiveness = (type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type))
+      let effectiveness = type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type);
       if (move.name === "Freeze Dry"){
-        effectiveness *= freeze_dry_check(defender)
+        effectiveness *= freeze_dry_check(defender);
       }
       if (effectiveness > 1.1){
-        turn_result.push("It's super effective!")
+        turn_result.push("It's super effective!");
        
       }
       else if(effectiveness === 0){
-        turn_result.push("It doesn't effect "+defender.name+ "...")
+        turn_result.push("It doesn't effect "+defender.name+ "...");
        
       }
       else if(effectiveness < 0.9){
-        turn_result.push("It's not very effective!")
+        turn_result.push("It's not very effective!");
        
       }
       if (critical === true){
-        turn_result.push("Critical hit!")
+        turn_result.push("Critical hit!");
        
-        critical = false
+        critical = false;
       }
     }
   }
+  
   if (defender.hp === 0){
-    turn_result.push(defender.name+ " fainted!")
+    turn_result.push(defender.name+ " fainted!");
     
   }
   if (attacker.hp === 0){
-    turn_result.push(attacker.name+ " fainted!")
+    turn_result.push(attacker.name+ " fainted!");
     
   }
   if (new_status === true){
-    turn_result.push(defender.name+" was "+defender.status+"!")
+    turn_result.push(defender.name+" was "+defender.status+"!");
+    new_status = false;
   }
   return turn_result;
+}
+
+
+
+function post_turn_effects(pokemon, pokemon_2){
+  let post_results = [];
+  pokemon.statusTimer --;
+  pokemon.boundTimer --;
+  if (pokemon.status === "Poisoned"){
+    pokemon.hp -= pokemon.base_hp/8;
+    post_results.push(pokemon.name+" is poisoned!");
+  }
+  if (pokemon.status === "Burned"){
+    pokemon.hp -= pokemon.base_hp/16;
+    post_results.push(pokemon.name+" is burned!");
+  }
+  if (pokemon.status === "Badly Poisoned"){
+    pokemon.hp -= pokemon.base_hp/16*-pokemon.statusTimer;
+    post_results.push(pokemon.name+" is badly poisoned!");
+  }
+  if (pokemon.bound === true){
+    if (pokemon.boundTimer > 0){
+      pokemon.hp -= pokemon.base_hp/8;
+      post_results.push(pokemon.name+" was hurt by"+pokemon.bound_by+"!");
+    }
+    else{
+      post_results.push(pokemon.name+" was freed from "+pokemon.bound_by);
+      pokemon.bound_by = "";
+      pokemon.bound = false;
+    }
+  }
+  if (pokemon.leechSeed === true){
+    pokemon.hp -= pokemon.base_hp/8;
+    pokemon_2.hp += pokemon.base_hp/8;
+    post_results.push(pokemon.name+"'s health was sapped by Leech Seed!");
+  }
 }
 
 
@@ -1025,36 +1152,37 @@ class Party {
     this.slot_4 = random(pokemon_list),
     this.slot_5 = random(pokemon_list),
     this.slot_6 = random(pokemon_list),
-    this.base_list = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6]
+    this.base_list = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6];
   }
   summary(x, y){
     let temporary_party_list = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6];
     let offset = y;
     for (let i = 0; i<6; i++){
-      textFont("Courier New")
+      textFont("Courier New");
       //image(temporary_party_list[i].sprites[1], x-80, offset, 80, 80)
-      textStyle(BOLD)
-      text(temporary_party_list[i].name+ "       Lvl. 100", x, offset-10)
-      text("HP: "+temporary_party_list[i].hp+"/"+temporary_party_list[i].base_hp, x+110, offset+5)
-      text("Attack: "+temporary_party_list[i].attack, x+110, offset+15)
-      text("Defense: "+temporary_party_list[i].defense, x+110, offset+25)
-      text("Sp. Atk: "+temporary_party_list[i].sp_atk, x+110, offset+35)
-      text("Sp. Def: "+temporary_party_list[i].sp_def, x+110, offset+45)
-      text("Speed: "+temporary_party_list[i].speed, x+110, offset+55)
-      textStyle(ITALIC)
-      textStyle()
-      text(temporary_party_list[i].type_1, x,offset+10)
-      text(temporary_party_list[i].type_2, x+(temporary_party_list[i].type_1.length*8),offset+10)
-      textStyle(NORMAL)
+      textStyle(BOLD);
+      text(temporary_party_list[i].name+ "       Lvl. 100", x, offset-10);
+      text("HP: "+temporary_party_list[i].hp+"/"+temporary_party_list[i].base_hp, x+110, offset+5);
+      text("Attack: "+temporary_party_list[i].attack, x+110, offset+15);
+      text("Defense: "+temporary_party_list[i].defense, x+110, offset+25);
+      text("Sp. Atk: "+temporary_party_list[i].sp_atk, x+110, offset+35);
+      text("Sp. Def: "+temporary_party_list[i].sp_def, x+110, offset+45);
+      text("Speed: "+temporary_party_list[i].speed, x+110, offset+55);
+      textStyle(ITALIC);
+      textStyle();
+      text(temporary_party_list[i].type_1, x,offset+10);
+      text(temporary_party_list[i].type_2, x+temporary_party_list[i].type_1.length*8,offset+10);
+      textStyle(NORMAL);
       if (temporary_party_list[i].status !== 0){
-        text(temporary_party_list[i].status, x, offset)}
-      text(temporary_party_list[i].moves[0].name, x, offset+25)
+        text(temporary_party_list[i].status, x, offset);
+      }
+      text(temporary_party_list[i].moves[0].name, x, offset+25);
       //text(temporary_party_list[i].moves[0].pp, (temporary_party_list[i].moves[0].name.length*8), offset+25)
-      text(temporary_party_list[i].moves[1].name, x, offset+35)
+      text(temporary_party_list[i].moves[1].name, x, offset+35);
       //text(temporary_party_list[i].moves[1].pp, (temporary_party_list[i].moves[1].name.length*8), offset+35)
-      text(temporary_party_list[i].moves[2].name, x, offset+45)
+      text(temporary_party_list[i].moves[2].name, x, offset+45);
       //text(temporary_party_list[i].moves[2].pp, (temporary_party_list[i].moves[2].name.length*8), offset+45)
-      text(temporary_party_list[i].moves[3].name, x, offset+55)
+      text(temporary_party_list[i].moves[3].name, x, offset+55);
       //text(temporary_party_list[i].moves[3].pp, (temporary_party_list[i].moves[3].name.length*8), offset+55)
       offset += 80;
     }
