@@ -602,7 +602,7 @@ function damage_check(attacker, defender, move, isBattle){
           attacker.stat_changes.attack + move.effect[1];
           return "boost";
         }
-        if (move.effect[0] === 5 || defender.status === 0){
+        if (move.effect[0] === 5 && defender.status === 0 && defender.type_1 !== fire && defender.type_2 !== fire){
           //5 Burns defender
           new_status = true;
           defender.status = "Burned";
@@ -611,12 +611,12 @@ function damage_check(attacker, defender, move, isBattle){
           //6 Lowers Sp. Def of defender
           defender.stat_changes.sp_def - move.effect[1];
         }
-        if (move.effect[0] === 7 || defender.status === 0){
+        if (move.effect[0] === 7 && defender.status === 0 && defender.type_1 !== ice && defender.type_2 !== ice){
           //7 Freezes defender
           new_status = true;
           defender.status = "Frozen";
         }
-        if (move.effect[0] === 8 || defender.status === 0){
+        if (move.effect[0] === 8 && defender.status === 0 && !(defender.type_1 === poison || defender.type_2 === steel) && !(defender.type_2 === poison || defender.type_1 === steel)){
           //8 Poisons defender
           new_status = true;
           defender.status = "Poisoned";
@@ -964,7 +964,8 @@ function turn_in_action(player, cpu, player_attack, cpu_attack){
       turn_result.push(turn_data_check(player_output, player, cpu, player_attack));
     }
   }
-
+  turn_result.push(post_turn_effects(player, cpu));
+  turn_result.push(post_turn_effects(cpu, player));
   if (cpu.status === "Fainted"){
     turn_result.push("CPU was defeated!");
     turn_result.push("CPU: You should be wearing shorts. They're soft and comfortable and easy to move in!");
@@ -974,6 +975,8 @@ function turn_in_action(player, cpu, player_attack, cpu_attack){
   if (player.status === "Fainted"){
     turn_result.push("Select your next Pokemon");
   }
+
+  turn_result = blank_array_clear(turn_result);
   return turn_result;
 }
 
@@ -1021,10 +1024,7 @@ function turn_data_check(move_result, attacker, defender, move){
     turn_result.push("It hurt itself in it's confusion!");
     
     attacking = false;
-    if (attacker.hp < 0){
-      attacker.hp = 0;
-      attacker.status = "Fainted";
-    }
+    turn_result.push(faint_check(attacker));
   }
   if (move_result === "paralyzed"){
     turn_result.push("It's fully paralyzed!");
@@ -1061,10 +1061,7 @@ function turn_data_check(move_result, attacker, defender, move){
     }
     else{
       defender.hp -= move_result;
-      if (defender.hp < 0){
-        defender.hp = 0;
-        defender.status = "Fainted";
-      }
+      turn_result.push(100*(move_result/defender.base_hp+defender.hp/defender.base_hp)+"%  --> "+100*(defender.hp/defender.base_hp)+"%",100*(move_result/defender.base_hp)+"%    /"+move_result);
       let effectiveness = type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type);
       if (move.name === "Freeze Dry"){
         effectiveness *= freeze_dry_check(defender);
@@ -1088,19 +1085,12 @@ function turn_data_check(move_result, attacker, defender, move){
       }
     }
   }
-  
-  if (defender.hp === 0){
-    turn_result.push(defender.name+ " fainted!");
-    
-  }
-  if (attacker.hp === 0){
-    turn_result.push(attacker.name+ " fainted!");
-    
-  }
   if (new_status === true){
     turn_result.push(defender.name+" was "+defender.status+"!");
     new_status = false;
   }
+  turn_result.push(faint_check(defender));
+  turn_result = blank_clear(turn_result);
   return turn_result;
 }
 
@@ -1113,19 +1103,23 @@ function post_turn_effects(pokemon, pokemon_2){
   if (pokemon.status === "Poisoned"){
     pokemon.hp -= pokemon.base_hp/8;
     post_results.push(pokemon.name+" is poisoned!");
+    post_results.push(faint_check(pokemon));
   }
   if (pokemon.status === "Burned"){
     pokemon.hp -= pokemon.base_hp/16;
     post_results.push(pokemon.name+" is burned!");
+    post_results.push(faint_check(pokemon));
   }
   if (pokemon.status === "Badly Poisoned"){
     pokemon.hp -= pokemon.base_hp/16*-pokemon.statusTimer;
     post_results.push(pokemon.name+" is badly poisoned!");
+    post_results.push(faint_check(pokemon));
   }
   if (pokemon.bound === true){
     if (pokemon.boundTimer > 0){
       pokemon.hp -= pokemon.base_hp/8;
       post_results.push(pokemon.name+" was hurt by"+pokemon.bound_by+"!");
+      post_results.push(faint_check(pokemon));
     }
     else{
       post_results.push(pokemon.name+" was freed from "+pokemon.bound_by);
@@ -1137,12 +1131,39 @@ function post_turn_effects(pokemon, pokemon_2){
     pokemon.hp -= pokemon.base_hp/8;
     pokemon_2.hp += pokemon.base_hp/8;
     post_results.push(pokemon.name+"'s health was sapped by Leech Seed!");
+    post_results.push(faint_check(pokemon));
   }
+  post_results = blank_clear(post_results);
+  return post_results;
 }
 
 
-
-
+function faint_check(pokemon){
+  if (pokemon.hp <= 0){
+    pokemon.hp = 0;
+    pokemon.status = "Fainted";
+    return pokemon.name+ " fainted!";
+  }
+  return "";
+}
+function blank_clear(list){
+  let new_list = list;
+  for(let i = new_list.length-1; i>=0; i --){
+    if (new_list[i].length<=1){
+      new_list.splice(i, 1);
+    }
+  }
+  return new_list;
+}
+function blank_array_clear(list){
+  let new_list = list;
+  for(let i = new_list.length-1; i>=0; i --){
+    if (new_list[i] === []){
+      new_list.splice(i, 1);
+    }
+  }
+  return new_list;
+}
 
 class Party {
   constructor(){
