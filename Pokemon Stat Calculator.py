@@ -6,7 +6,7 @@ sp_def = [int(input("Sp. Def: ")),int(input("EV: "))]
 speed = [int(input("Speed: ")),int(input("EV: "))]
 level = 100
 
-print(((2*hp[0]+31+(hp[1]/4))/100)*level+10)
+print(((2*hp[0]+31+(hp[1]/4))/100)*level+110)
 
 for stat in (atk, dfs, sp_atk, sp_def, speed):
     print((((2*stat[0]+31+(stat[1]/4))*level)/100)+5)

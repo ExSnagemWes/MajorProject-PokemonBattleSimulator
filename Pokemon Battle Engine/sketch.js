@@ -17,6 +17,7 @@ let healing = "heal";
 let boost = "boost";
 let new_status = false;
 let new_confused = 0;
+let gameMode = "HP";
 
 //Convenience. Pressing shift constantly really slows me down
 //defines Pokemon Types
@@ -44,6 +45,7 @@ let critical = false;
 
 
 let moves_list = {
+  //Defines all attacks and effects, which will be broken down and read in Damage Checker
   dragon_claw: {
     name: "Dragon Claw",
     type: dragon, 
@@ -132,7 +134,7 @@ let moves_list = {
     pp: 5,
     category: special,
     priority: 0,
-    effect: [6, 20]},
+    effect: [6, 20, 1]},
 
   air_slash: {
     name: "Air Slash",
@@ -192,7 +194,7 @@ let moves_list = {
     pp: 10,
     category: special,
     priority: 0,
-    effect: [6,20]},
+    effect: [6,20, 1]},
 
   sludge_bomb: {
     name: "Sludge Bomb",
@@ -223,6 +225,7 @@ let moves_list = {
     category: special,
     priority: 0,
     effect: [9, 100]},
+
   blizzard: {
     name: "Blizzard",
     type: ice,
@@ -232,6 +235,7 @@ let moves_list = {
     category: special,
     priority: 0,
     effect: [7,20]},
+
   freeze_dry: {
     name: "Freeze Dry",
     type: ice,
@@ -241,6 +245,66 @@ let moves_list = {
     category: special,
     priority: 0,
     effect: [10,100]},
+
+  stone_edge: {
+    name: "Stone Edge",
+    type: rock,
+    power: 100,
+    accuracy: 80,
+    pp: 5,
+    category: physical,
+    priority: 0,
+    effect: [11,100]},
+
+  crunch: {
+    name: "Crunch",
+    type: dark,
+    power: 80,
+    accuracy: 100,
+    pp: 15,
+    category: physical,
+    priority: 0,
+    effect: [12,20,1]},
+
+  avalanche: {
+    name: "Avalanche",
+    type: ice,
+    power: 60,
+    accuracy: 100,
+    pp: 10,
+    category: physical,
+    priority: 0,
+    effect: [13,100]},
+
+  heavy_slam: {
+    name: "Heavy Slam",
+    type: steel,
+    power: 120,
+    accuracy: 85,
+    pp: 10,
+    category: physical,
+    priority: 0,
+    effect: [0,0]},
+  rest: {
+    name: "Rest",
+    type: psychic,
+    power: 0,
+    accuracy: 100,
+    pp: 10,
+    category: healing,
+    priority: 0,
+    effect: [14,100]},
+  sleep_talk:{
+    name: "Sleep Talk",
+    type: psychic,
+    power: 0,
+    accuracy: 100,
+    pp: 15,
+    category: healing,
+    priority: 0,
+    effect: [15, 100]
+  },
+  
   struggle: {
     name: "Struggle",
     type: none,
@@ -413,8 +477,8 @@ let pokemon = {
     attack: 152,
     defense: 202,
     sp_atk: 328,
-    sp_def: 237,
-    speed: 198,
+    sp_def: 236,
+    speed: 199,
     stat_changes: {
       attack: 0,
       defense: 0,
@@ -463,9 +527,79 @@ let pokemon = {
       moves_list.blizzard,
       moves_list.roost,
       moves_list.freeze_dry]
+  },
+  tyranitar: {
+    name: "Tyranitar",
+    //sprites: [loadImage("sprites/tyranitar_front.png"), loadImage("sprites/tyranitar_back.png")],
+    status: 0,
+    bound: false,
+    bound_by: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
+    flinch: false,
+    statusTimer: 0,
+    base_hp: 404,
+    hp: 404,
+    attack: 403,
+    defense: 256,
+    sp_atk: 226,
+    sp_def: 236,
+    speed: 114,
+    stat_changes: {
+      attack: 0,
+      defense: 0,
+      sp_atk: 0,
+      sp_def: 0,
+      speed: 0
+    },
+    type_1: rock,
+    type_2: dark,
+    moves: [moves_list.stone_edge, 
+      moves_list.crunch, 
+      moves_list.avalanche, 
+      moves_list.earthquake]
+  },
+  aggron: {
+    name: "Aggron",
+    //sprites: [loadImage("sprites/aggron_front.png"), loadImage("sprites/aggron_back.png")],
+    status: 0,
+    bound: false,
+    bound_by: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
+    flinch: false,
+    statusTimer: 0,
+    base_hp: 344,
+    hp: 344,
+    attack: 256,
+    defense: 396,
+    sp_atk: 141,
+    sp_def: 249,
+    speed: 136,
+    stat_changes: {
+      attack: 0,
+      defense: 0,
+      sp_atk: 0,
+      sp_def: 0,
+      speed: 0
+    },
+    type_1: steel,
+    type_2: dragon,
+    moves: [moves_list.heavy_slam, 
+      moves_list.dragon_claw, 
+      moves_list.rest, 
+      moves_list.sleep_talk]
   }
 };
-let pokemon_list = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno];
+let pokemon_list = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.tyranitar, pokemon.aggron];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -487,6 +621,20 @@ function draw() {
 
 
 function damage_check(attacker, defender, move, isBattle){
+  let attackerModdedSpeed = attacker.speed;
+  let defenderModdedSpeed = defender.speed;
+  if (attacker.status === "Paralyzed"){
+    attackerModdedSpeed *= 0.5;
+  }
+  if (attacker.stat_changes.speed > 0){
+    attackerModdedSpeed += attacker.stat_changes.speed * (0.5*attackerModdedSpeed);
+  }
+  if (defender.status === "Paralyzed"){
+    defenderModdedSpeed *= 0.5;
+  }
+  if (defender.stat_changes.speed > 0){
+    defenderModdedSpeed += defender.stat_changes.speed * (0.5*defenderModdedSpeed);
+  }
   let crit_chance = 1;
   let damage;
   if (isBattle === false){
@@ -576,12 +724,9 @@ function damage_check(attacker, defender, move, isBattle){
       }
       
     }
-    if (crit_chance>random(16)){
-      damage *= 1.5;
-      critical = true;
-    }
+    
     if (!(move.effect[0] === 9 || move.effect[0] === 10)){
-      if(move.effect[1]>random(100)){
+      if(move.effect[1]>=random(100)){
         if (move.effect[0] === 1){
           //1 Confuses defender
           defender.confused = true;
@@ -609,7 +754,7 @@ function damage_check(attacker, defender, move, isBattle){
         }
         if (move.effect[0] === 6){
           //6 Lowers Sp. Def of defender
-          defender.stat_changes.sp_def - move.effect[1];
+          defender.stat_changes.sp_def - move.effect[2];
         }
         if (move.effect[0] === 7 && defender.status === 0 && defender.type_1 !== ice && defender.type_2 !== ice){
           //7 Freezes defender
@@ -620,10 +765,43 @@ function damage_check(attacker, defender, move, isBattle){
           //8 Poisons defender
           new_status = true;
           defender.status = "Poisoned";
-        }        
+        }
+        if (move.effect[0] === 11){
+          //Higher Critical Hit ratio
+          crit_chance ++;
+        }
+        if (move.effect[0] === 12){
+          //- Defense
+          defender.stat_changes.defense - move.effect[2];
+        }
+        if (move.effect[0] === 13){
+          //Doubles Damage if user is slower
+          if (attackerModdedSpeed < defenderModdedSpeed){
+            damage *= 2;
+          }
+        }    
+        if (move.effect[0] === 14){
+          attacker.status = "Sleeping";
+          attacker.statusTimer += 2;
+          return "rest";
+        }
+        if (move.effect[0] === 15){
+          if (attacker.status === "Sleeping"){
+            let sleep_talk_result = damage_check(attacker, defender, attacker.moves[Math.floor(random(0.1, 2.9))], true);
+            if (typeof sleep_talk_result !== "number"){
+              return sleep_talk_result;
+            }
+            else{
+              damage = sleep_talk_result;
+            }
+          }
+        }    
       }
     }
-    
+    if (crit_chance>random(16)){
+      damage *= 1.5;
+      critical = true;
+    }
     //
     damage = Math.floor(damage * random(217, 255) / 255);
   }
@@ -802,7 +980,7 @@ function type_effect(pokemon_type, move_type){
     if (move_type === ground || move_type === psychic){
       return 2;
     }
-    else if (move_type === grass || move_type === bug || move_type === fighting || move_type === fairy){
+    else if (move_type === grass || move_type === bug || move_type === fighting || move_type === fairy || move_type === poison){
       return 0.5;
     }
     return 1;
@@ -995,7 +1173,7 @@ function turn_data_check(move_result, attacker, defender, move){
     attacker.status = 0;
   }
 
-  if (attacker.status === "Sleeping"){
+  if (attacker.status === "Sleeping" && move_result !== "rest"){
     //Checks if it is time to wake up, then responds accordingly
     if (attacker.statusTimer === 0){
       turn_result.push([attacker.name+ " woke up!"]);
@@ -1031,27 +1209,40 @@ function turn_data_check(move_result, attacker, defender, move){
     
     attacking = false;
   }
+  if (move_result === "Flinched"){
+    turn_result.push(attacker.name+" flinched!");
+    attacking = false;
+  }
   
-  //Move Disabled checked
   if (!(move.category === physical || move.category === special)){
     if (move_result === "healed"){
       attacker.hp += Math.floor(attacker.base_hp/2);
-      if(attacker.hp> attacker.base_hp){
-        attacker.hp = attacker.base_hp;
-      }
+      turn_result.push([attacker.name+ " used ",move.name , "!"]);
       turn_result.push(attacker.name+ " regained health!");
-     
     }
-    else if (move_result === "boost"){
+    if (attacker.hp> attacker.base_hp){
+      attacker.hp = attacker.base_hp;
+    }
+    else if (move_result === "rest"){
+      turn_result.push(attacker.name+" used "+move.name+"!");
+      turn_result.push(attacker.name+" is asleep?!");
+      turn_result.push(attacker.name+" regained health!");
+      attacking = false;
+    }
+
+    if (move_result === "boost"){
       if (move.name ==="Swords Dance"){
+        turn_result.push([attacker.name+ " used ",move.name , "!"]);
         turn_result.push(attacker.name, "'s Attack Sharply increased!")  ;   
       }
     }
     attacking = false;
   }
+  //Move Disabled checked
   if (attacking === true){
-    //Move disabled false
     turn_result.push([attacker.name+ " used ",move.name , "!"]);
+    //Move disabled false
+    
     
     //animations.get(move.name)
     //animation input
@@ -1061,7 +1252,12 @@ function turn_data_check(move_result, attacker, defender, move){
     }
     else{
       defender.hp -= move_result;
-      turn_result.push(100*(move_result/defender.base_hp+defender.hp/defender.base_hp)+"%  --> "+100*(defender.hp/defender.base_hp)+"%",100*(move_result/defender.base_hp)+"%    /"+move_result);
+      if (gameMode === "%"){
+        turn_result.push(Math.round(10000*(move_result/defender.base_hp+defender.hp/defender.base_hp))/100+"%  --> "+Math.max(Math.round(10000*(defender.hp/defender.base_hp)),0)/100+"%","-"+Math.round(10000*(move_result/defender.base_hp))/100+"%");
+      }
+      else{
+        turn_result.push(move_result+defender.hp+"HP  --> "+ Math.max(defender.hp, 0)+"HP","-"+move_result+"HP");
+      }
       let effectiveness = type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type);
       if (move.name === "Freeze Dry"){
         effectiveness *= freeze_dry_check(defender);
@@ -1101,23 +1297,23 @@ function post_turn_effects(pokemon, pokemon_2){
   pokemon.statusTimer --;
   pokemon.boundTimer --;
   if (pokemon.status === "Poisoned"){
-    pokemon.hp -= pokemon.base_hp/8;
+    pokemon.hp -= Math.floor(pokemon.base_hp/8);
     post_results.push(pokemon.name+" is poisoned!");
     post_results.push(faint_check(pokemon));
   }
   if (pokemon.status === "Burned"){
-    pokemon.hp -= pokemon.base_hp/16;
+    pokemon.hp -= Math.floor(pokemon.base_hp/16);
     post_results.push(pokemon.name+" is burned!");
     post_results.push(faint_check(pokemon));
   }
   if (pokemon.status === "Badly Poisoned"){
-    pokemon.hp -= pokemon.base_hp/16*-pokemon.statusTimer;
+    pokemon.hp -= Math.floor(pokemon.base_hp/16*-pokemon.statusTimer);
     post_results.push(pokemon.name+" is badly poisoned!");
     post_results.push(faint_check(pokemon));
   }
   if (pokemon.bound === true){
     if (pokemon.boundTimer > 0){
-      pokemon.hp -= pokemon.base_hp/8;
+      pokemon.hp -= Math.floor(pokemon.base_hp/8);
       post_results.push(pokemon.name+" was hurt by"+pokemon.bound_by+"!");
       post_results.push(faint_check(pokemon));
     }
@@ -1128,8 +1324,8 @@ function post_turn_effects(pokemon, pokemon_2){
     }
   }
   if (pokemon.leechSeed === true){
-    pokemon.hp -= pokemon.base_hp/8;
-    pokemon_2.hp += pokemon.base_hp/8;
+    pokemon.hp -= Math.floor(pokemon.base_hp/8);
+    pokemon_2.hp += Math.floor(pokemon.base_hp/8);
     post_results.push(pokemon.name+"'s health was sapped by Leech Seed!");
     post_results.push(faint_check(pokemon));
   }
