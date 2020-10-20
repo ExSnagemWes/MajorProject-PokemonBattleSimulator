@@ -15,6 +15,7 @@ let physical = "ph";
 let special = "sp";
 let healing = "heal";
 let boost = "boost";
+let status = "status";
 let new_status = false;
 let new_confused = 0;
 let gameMode = "HP";
@@ -300,7 +301,7 @@ let moves_list = {
     power: 0,
     accuracy: 100,
     pp: 15,
-    category: healing,
+    category: status,
     priority: 0,
     effect: [15, 100]
   },
@@ -638,7 +639,7 @@ function damage_check(attacker, defender, move, isBattle){
   let crit_chance = 1;
   let damage;
   if (isBattle === false){
-    if (move.category === healing || move.category === boost){
+    if (move.category === healing || move.category === boost || move.category === status){
       return 0;
     }
   }
@@ -781,20 +782,15 @@ function damage_check(attacker, defender, move, isBattle){
           }
         }    
         if (move.effect[0] === 14){
-          attacker.status = "Sleeping";
-          attacker.statusTimer += 2;
+          if (attacker.status !== "Sleeping"){
+            attacker.statusTimer += 2;
+            attacker.hp = attacker.base_hp;
+          }
           return "rest";
         }
         if (move.effect[0] === 15){
-          if (attacker.status === "Sleeping"){
-            let sleep_talk_result = damage_check(attacker, defender, attacker.moves[Math.floor(random(0.1, 2.9))], true);
-            if (typeof sleep_talk_result !== "number"){
-              return sleep_talk_result;
-            }
-            else{
-              damage = sleep_talk_result;
-            }
-          }
+          //Sleep Talk
+          return "sleep talk";
         }    
       }
     }
@@ -921,7 +917,7 @@ function type_effect(pokemon_type, move_type){
     if (move_type === fighting || move_type === fire || move_type === ground){
       return 2;
     }
-    else if (move_type === normal || move_type === rock || move_type === fairy || move_type === dragon || move_type === flying || move_type === bug || move_type === steel || move_type === psychic || move_type === grass ){
+    else if (move_type === normal || move_type === rock || move_type === fairy || move_type === dragon || move_type === flying || move_type === bug || move_type === steel || move_type === psychic || move_type === grass || move_type === ice){
       return 0.5;
     }
 
@@ -1014,7 +1010,7 @@ function type_effect(pokemon_type, move_type){
 
   else if (pokemon_type === rock){
     if (move_type === steel || move_type === ground || move_type === grass || move_type === water || move_type === fighting){
-      return 0;
+      return 2;
     }
     else if (move_type === normal || move_type === flying || move_type === fire){
       return 0.5;
@@ -1132,7 +1128,7 @@ function turn_in_action(player, cpu, player_attack, cpu_attack){
   }
   else{
     //CPU Moves first
-    let cpu_output = damage_check(cpu, player, cpu_attack, true);
+    let cpu_output = aiMoveSelect(cpu, player, cpuModdedSpeed, playerModdedSpeed);
     //cpu attack
     turn_result.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
 
@@ -1158,11 +1154,13 @@ function turn_in_action(player, cpu, player_attack, cpu_attack){
   return turn_result;
 }
 
-function turn_data_check(move_result, attacker, defender, move){
+function turn_data_check(attackResult, attacker, defender, move){
   //Starts by checking if status ailments would inhibit attacking (decided in the isBattle portion of damage_check)
   let turn_result = [];
+  let attackToUse = move;
   let attacking = true;
-  if (move_result === "frozen"){
+  let sleepTalk = false;
+  if (attackResult === "frozen"){
     turn_result.push("It's frozen solid!");
     
     attacking = false;
@@ -1173,7 +1171,7 @@ function turn_data_check(move_result, attacker, defender, move){
     attacker.status = 0;
   }
 
-  if (attacker.status === "Sleeping" && move_result !== "rest"){
+  if (attacker.status === "Sleeping" && attackResult !== "rest"){
     //Checks if it is time to wake up, then responds accordingly
     if (attacker.statusTimer === 0){
       turn_result.push([attacker.name+ " woke up!"]);
@@ -1182,7 +1180,16 @@ function turn_data_check(move_result, attacker, defender, move){
     else{
       turn_result.push("It's fast asleep!");
       attacking = false;
-    }  
+    }
+  }
+
+  if (attackResult === "sleep talk"){
+    if (attacker.status === "Sleeping"){
+      sleepTalk = true;
+      attacking = true;
+      attackToUse = attacker.moves[Math.round(random(2))];
+      attackResult =damage_check(attacker, defender, attackToUse, true);
+    }
   }
 
   
@@ -1197,42 +1204,52 @@ function turn_data_check(move_result, attacker, defender, move){
     }
     
   }
-  if (move_result === "confused"){
+  if (attackResult === "confused"){
     attacker.hp =- damage_check(attacker, attacker, moves_list.struggle, true);
     turn_result.push("It hurt itself in it's confusion!");
     
     attacking = false;
     turn_result.push(faint_check(attacker));
   }
-  if (move_result === "paralyzed"){
+  if (attackResult === "paralyzed"){
     turn_result.push("It's fully paralyzed!");
     
     attacking = false;
   }
-  if (move_result === "Flinched"){
+  if (attackResult === "Flinched"){
     turn_result.push(attacker.name+" flinched!");
     attacking = false;
   }
   
-  if (!(move.category === physical || move.category === special)){
-    if (move_result === "healed"){
+  if (!(attackToUse.category === physical || attackToUse.category === special)){
+    if (attackResult === "healed"){
       attacker.hp += Math.floor(attacker.base_hp/2);
-      turn_result.push([attacker.name+ " used ",move.name , "!"]);
+      turn_result.push([attacker.name+ " used ",attackToUse.name , "!"]);
       turn_result.push(attacker.name+ " regained health!");
     }
     if (attacker.hp> attacker.base_hp){
       attacker.hp = attacker.base_hp;
     }
-    else if (move_result === "rest"){
-      turn_result.push(attacker.name+" used "+move.name+"!");
-      turn_result.push(attacker.name+" is asleep?!");
-      turn_result.push(attacker.name+" regained health!");
-      attacking = false;
+    else if (attackResult === "rest"){
+      if (sleepTalk === true){
+        turn_result.push(attacker.name+" used Sleep Talk!");
+        turn_result.push(attacker.name+" used Rest!");
+        turn_result.push("But it failed!");
+        attacking = false;
+      }  
+      else if (attackToUse === moves_list.rest){
+        turn_result.push(attacker.name+" used "+attackToUse.name+"!");
+        turn_result.push(attacker.name+" fell asleep!");
+        turn_result.push(attacker.name+" regained health!");
+        attacker.status === "Sleeping";
+        attacking = false;
+      }
+      
     }
 
-    if (move_result === "boost"){
-      if (move.name ==="Swords Dance"){
-        turn_result.push([attacker.name+ " used ",move.name , "!"]);
+    if (attackResult === "boost"){
+      if (attackToUse.name ==="Swords Dance"){
+        turn_result.push([attacker.name+ " used ",attackToUse.name , "!"]);
         turn_result.push(attacker.name, "'s Attack Sharply increased!")  ;   
       }
     }
@@ -1240,26 +1257,26 @@ function turn_data_check(move_result, attacker, defender, move){
   }
   //Move Disabled checked
   if (attacking === true){
-    turn_result.push([attacker.name+ " used ",move.name , "!"]);
+    turn_result.push([attacker.name+ " used ",attackToUse.name , "!"]);
     //Move disabled false
     
     
-    //animations.get(move.name)
+    //animations.get(attackToUse.name)
     //animation input
-    if (move_result === "missed"){
+    if (attackResult === "missed"){
       turn_result.push("It's attack missed.");
      
     }
     else{
-      defender.hp -= move_result;
+      defender.hp -= attackResult;
       if (gameMode === "%"){
-        turn_result.push(Math.round(10000*(move_result/defender.base_hp+defender.hp/defender.base_hp))/100+"%  --> "+Math.max(Math.round(10000*(defender.hp/defender.base_hp)),0)/100+"%","-"+Math.round(10000*(move_result/defender.base_hp))/100+"%");
+        turn_result.push(Math.round(10000*(attackResult/defender.base_hp+defender.hp/defender.base_hp))/100+"%  --> "+Math.max(Math.round(10000*(defender.hp/defender.base_hp)),0)/100+"%","-"+Math.round(10000*(attackResult/defender.base_hp))/100+"%");
       }
       else{
-        turn_result.push(move_result+defender.hp+"HP  --> "+ Math.max(defender.hp, 0)+"HP","-"+move_result+"HP");
+        turn_result.push(attackResult+defender.hp+"HP  --> "+ Math.max(defender.hp, 0)+"HP","-"+attackResult+"HP");
       }
-      let effectiveness = type_effect(defender.type_1, move.type) * type_effect(defender.type_2, move.type);
-      if (move.name === "Freeze Dry"){
+      let effectiveness = type_effect(defender.type_1, attackToUse.type) * type_effect(defender.type_2, attackToUse.type);
+      if (attackToUse.name === "Freeze Dry"){
         effectiveness *= freeze_dry_check(defender);
       }
       if (effectiveness > 1.1){
@@ -1360,6 +1377,68 @@ function blank_array_clear(list){
   }
   return new_list;
 }
+
+function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
+  //data guide| 0 = has-FILLER-Move? | 1 = FILLER-MoveNumber
+  let priorityCheck = [false, 0];
+  let healCheck = [false, 0];
+  let boostCheck = [false, 0];
+  let hasKillMove = false;
+  let moveCanKill = [false, false, false, false]
+  //Checks through moves, and learns what the options are
+  for (let i = 0; i < 3; i++){
+    //Checks if it has a priority move
+    if (cpu.moves[i].priority>0){
+      priorityCheck[0] = true;
+      priorityCheck[1] = i;
+    }
+    if (cpu.moves[i].category === healing){
+      healCheck[0] = true;
+      healCheck[1] = i;
+    }
+    if (cpu.moves[i].category === boost){
+      boostCheck[0] = true;
+      boostCheck[1] = i;
+    }
+    if (cpu.moves[i].power !== 0){
+      if (hasKillMove === false){
+        if ((damage_check(cpu, player, cpu.moves[i], false)>player.hp){
+          moveCanKill[i] = true;
+      }
+    }
+  }
+
+
+  //Checks if a) The Computer can attack before the player, b) It has the ability to Faint the player| If it can land a blow to KO the player, it will. This plays off of later AI commands
+  if ((cpuSpeed > playerSpeed && (damage_check(cpu, player, cpu.moves[find_best_damage(cpu, player)], false)>player.hp)) || (priorityCheck[0] === true && moveCanKill[priorityCheck[1]])){
+    //Clarifies if it is using a Priority move
+    if (moveCanKill[priorityCheck[1]] === true){
+      return cpu.moves[priorityCheck[1]];
+    }
+
+    return cpu.moves[find_best_damage(cpu, player)];
+  
+  }
+  //Checks if CPU is about to lose (if it were faced with another CPU)
+  if (cpu.hp < damage_check(player, cpu, player.moves[find_best_damage(player, cpu)], false)){
+    //If it can heal before it gets killed, it will
+    if (healCheck[0] === true || cpuSpeed > playerSpeed){
+      return cpu.moves(healCheck[1]);
+    }
+    //If it can do one last priority attack before it dies in a last-ditch attempt, even if it can't kill, it will (even a little is better than nothing)
+    else if(priorityCheck[0] === true){
+      return cpu.moves(priorityCheck[1]);
+    }
+  }
+  //The computer knows it shouldn't be at risk of dying immediately, so it plays no desperate measures
+
+  if (cpu.hp > cpu.base_hp*0.75){
+    if(){}
+  
+  }
+
+}
+
 
 class Party {
   constructor(){
