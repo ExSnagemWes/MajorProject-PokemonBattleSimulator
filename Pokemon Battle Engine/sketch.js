@@ -20,6 +20,12 @@ let newStatus = false;
 let newConfused = 0;
 let gameMode = "HP";
 let panicModeCounter = 0;
+let readerBusy = false;
+let readerProgress = 0;
+let resetReader = true;
+let textInterface = "Press 'Spacebar' to begin";
+let data;
+let moveSelected = 0;
 
 //Convenience. Pressing shift constantly really slows me down
 //defines Pokemon Types
@@ -57,6 +63,17 @@ let movesList = {
     category: physical,
     priority: 0,
     effect: [0, 0]},
+
+  dazzling_gleam: {
+    name: "Dazzling Gleam",
+    type: fairy, 
+    power: 80, 
+    accuracy: 100, 
+    pp: 10, 
+    category: special,
+    priority: 0,
+    effect: [0, 0]},
+  
 
   hurricane: {
     name: "Hurricane",
@@ -107,6 +124,7 @@ let movesList = {
     category: physical,
     priority: 0,
     effect: [3, 30]},
+
   rock_slide: {
     name: "Rock Slide",
     type: rock,
@@ -116,6 +134,16 @@ let movesList = {
     category: physical,
     priority: 0,
     effect: [3, 30]},
+
+  thunder_wave: {
+    name: "Thunder Wave",
+    type: electric,
+    power: 0,
+    accuracy: 100,
+    pp: 30,
+    category: boost,
+    priority: 0,
+    effect: [18,100]},
 
   swords_dance: {
     name: "Swords Dance",
@@ -171,7 +199,7 @@ let movesList = {
     name: "Aura Sphere",
     type: fighting,
     power: 80,
-    accuracy: 10000,
+    accuracy: 110,
     pp: 20,
     category: special,
     priority: 0,
@@ -203,6 +231,16 @@ let movesList = {
     power: 90,
     accuracy: 100,
     pp: 10,
+    category: special,
+    priority: 0,
+    effect: [6,20, 1]},
+
+  shadow_ball: {
+    name: "Shadow Ball",
+    type: ghost,
+    power: 80,
+    accuracy: 100,
+    pp: 15,
     category: special,
     priority: 0,
     effect: [6,20, 1]},
@@ -246,6 +284,16 @@ let movesList = {
     category: special,
     priority: 0,
     effect: [7,20]},
+
+  thunder: {
+    name: "Thunder",
+    type: electric,
+    power: 120,
+    accuracy: 70,
+    pp: 10,
+    category: special,
+    priority: 0,
+    effect: [18,30]},
 
   freeze_dry: {
     name: "Freeze Dry",
@@ -296,6 +344,7 @@ let movesList = {
     category: physical,
     priority: 0,
     effect: [0,0]},
+
   rest: {
     name: "Rest",
     type: psychic,
@@ -305,6 +354,7 @@ let movesList = {
     category: healing,
     priority: 0,
     effect: [14,100]},
+
   sleep_talk:{
     name: "Sleep Talk",
     type: psychic,
@@ -315,6 +365,7 @@ let movesList = {
     priority: 0,
     effect: [15, 100]
   },
+
   megahorn: {
     name: "Megahorn",
     type: bug,
@@ -324,6 +375,7 @@ let movesList = {
     category: physical,
     priority: 0,
     effect: [0,0]},
+
   close_combat: {
     name: "Close Combat",
     type: fighting,
@@ -333,6 +385,7 @@ let movesList = {
     category: physical,
     priority: 0,
     effect: [16,100]},
+
   struggle: {
     name: "Struggle",
     type: none,
@@ -342,6 +395,7 @@ let movesList = {
     category: physical,
     priority: 0,
     effect: [0,0]},
+
   curse:{
     name: "Curse",
     type: ghost,
@@ -350,8 +404,7 @@ let movesList = {
     pp: 10, 
     category: boost,
     priority: 0,
-    effect: [17, 100]
-  }
+    effect: [17, 100]}
 };
   
 //let damage = 0;
@@ -657,7 +710,7 @@ let pokemon = {
     sp_atk: 114,
     sp_def: 226,
     speed: 220,
-    stat_changes: {
+    statModifiers: {
       attack: 0,
       defense: 0,
       sp_atk: 0,
@@ -670,23 +723,123 @@ let pokemon = {
       movesList.rock_slide, 
       movesList.swords_dance, 
       movesList.close_combat]
+  },
+  gengar: {
+    name: "Gengar",
+    //sprites: [loadImage("sprites/gengar_front.png"), loadImage("sprites/gengar_back.png")],
+    status: 0,
+    bound: false,
+    boundBy: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
+    flinch: false,
+    statusTimer: 0,
+    baseHP: 261,
+    hp: 261,
+    attack: 151,
+    defense: 157,
+    sp_atk: 359,
+    sp_def: 186,
+    speed: 350,
+    statModifiers: {
+      attack: 0,
+      defense: 0,
+      sp_atk: 0,
+      sp_def: 0,
+      speed: 0
+    },
+    type1: ghost,
+    type2: poison,
+    moves: [movesList.shadow_ball, 
+      movesList.sludge_bomb, 
+      movesList.focus_blast, 
+      movesList.dazzling_gleam]
+  },
+  zapdos: {
+    name: "Zapdos",
+    //sprites: [loadImage("sprites/zapdos_front.png"), loadImage("sprites/zapdos_back.png")],
+    status: 0,
+    bound: false,
+    boundBy: none,
+    boundTimer: 0,
+    confused: false,
+    confusedTimer: 0,
+    leechSeed: false,
+    // item: 0,
+    // ability: 0,
+    flinch: false,
+    statusTimer: 0,
+    baseHP: 353,
+    hp: 353,
+    attack: 196,
+    defense: 206,
+    sp_atk: 349,
+    sp_def: 216,
+    speed: 295,
+    statModifiers: {
+      attack: 0,
+      defense: 0,
+      sp_atk: 0,
+      sp_def: 0,
+      speed: 0
+    },
+    type1: electric,
+    type2: flying,
+    moves: [movesList.hurricane, 
+      movesList.thunder, 
+      movesList.roost, 
+      movesList.thunder_wave]
   }
 };
-let pokemon_list = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.tyranitar, pokemon.aggron, pokemon.heracross];
+let pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar];
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   playerParty = new Party();
+  playerParty.intitalize;
   cpuParty = new Party();
   activePlayer = playerParty.slot_1;
   activeCPU = cpuParty.slot_1;
 }
 
 function draw() {
-  background(255);
+  background(130, 255, 100);
+  textFont("Cambria");
+  
+  if (typeof textInterface === "object"){
+    text(textInterface[0]+textInterface[1]+textInterface[2], 0, height-50);
+    console.log(textInterface[1]);
+  }
+  else{
+    text(textInterface, 0, height-50);
+  }
   noSmooth();
-  playerParty.summary(0,20);
-  cpuParty.summary(width-200,20);
+  if (activePlayer.status !== "Fainted"){
+    playerParty.summary(0,20, false, false);
+  }
+  cpuParty.summary(width-200,20, false, true);
+
+
+  if (activePlayer.status === "Fainted"){
+    playerParty.summary(0,20, true, false);
+    let switchOutResult = pokemonSwitch(playerParty, true, true);
+    if (typeof switchOutResult !== "string"){
+      activePlayer = switchOutResult;
+      console.log("Go! "+ activePlayer.name + "!");
+    }
+    else{
+      console.log(switchOutResult);
+    }
+  }
+  if (activeCPU.status === "Fainted"){
+    activeCPU = pokemonSwitch(cpuParty, false, true);
+    console.log("Take him out, "+activeCPU.name+"!");
+  }
+  key = "";
 }
 
 
@@ -768,7 +921,7 @@ function damageCalculator(attacker, defender, move, isBattle){
       return "Flinched";
     }
     if (attacker.status === "Paralyzed"){
-      if (Math.round(random(3))===1){
+      if (random([true, false, false]) === true){
         return "paralyzed";
       }
     }
@@ -785,10 +938,10 @@ function damageCalculator(attacker, defender, move, isBattle){
         return "missed";
       }
     }
-    if (attacker.status === "Confused"){
+    if (attacker.confused === true){
       attacker.confusedTimer --;
-      if (attacker.confusedTimer >0){
-        if (Math.round(random(2))===1){
+      if (attacker.confusedTimer > 0){
+        if (random([true, false])=== true){
           return "confused";
         }
       }
@@ -817,7 +970,7 @@ function damageCalculator(attacker, defender, move, isBattle){
           attacker.statModifiers.attack + move.effect[2];
           return "boost";
         }
-        if (move.effect[0] === 5 && defender.status === 0 && defender.type1 !== fire && defender.type2 !== fire){
+        if (move.effect[0] === 5 && defender.status === 0 && (defender.type1 !== fire && defender.type2 !== fire)){
           //5 Burns defender
           newStatus = true;
           defender.status = "Burned";
@@ -852,7 +1005,8 @@ function damageCalculator(attacker, defender, move, isBattle){
         }    
         if (move.effect[0] === 14){
           if (attacker.status !== "Sleeping"){
-            attacker.statusTimer += 2;
+            attacker.statusTimer = 2;
+            attacker.status = "Sleeping";
             attacker.hp = attacker.baseHP;
           }
           return "rest";
@@ -871,9 +1025,15 @@ function damageCalculator(attacker, defender, move, isBattle){
           attacker.statModifiers.defense ++;
           attacker.statModifiers.speed --;
           return "boost";
+        }
+        if (move.effect[0] === 18 &&(defender.type1 !== electric && defender.type2 !== electric)){
+          //The Target becomes paralyzed
+          newStatus = true;
+          defender.status = "Paralyzed";
+          return "boost";
         }    
       }
-    }
+    } 
     if (criticalHitChance>random(16)){
       damage *= 1.5;
       critical = true;
@@ -1050,6 +1210,7 @@ function typeEffectivenessChecker(pokemon_type, move_type){
     else if (move_type === normal || move_type === fighting){
       return 0;
     }
+    return 1;
   }
 
   else if (pokemon_type === poison){
@@ -1133,15 +1294,18 @@ function findBestDamage(attacker, defender){
   return highestDamage;
 }
 
-function findBestOffensivePkemon(attacker_party, defender){
-  let highestDamageOutput = [0,0];
+function findBestOffensivePokemon(attacker_party, defender){
+  let highestDamageOutput = [0,-666];
   for (let i = 0; i<6; i++){
     let damage = damageCalculator(attacker_party.base_list[i], defender, attacker_party.base_list[i].moves[findBestDamage(attacker_party.base_list[i], defender)], false);
-    if (damage > highestDamageOutput[0]){
+    if (damage > highestDamageOutput[0] && attacker_party.base_list[i].status !== "Fainted"){
       highestDamageOutput[0] = damage;
       highestDamageOutput[1] = i;
     }
   }
+  // if (highestDamageOutput[1] === -666){
+  //   return "Playet wins";
+  // }
   return highestDamageOutput[1];
 }
 
@@ -1149,6 +1313,7 @@ function turnInProgress(player, cpu, player_attack, cpu_attack){
   let turnDataLogs = [];
   let playerModdedSpeed = player.speed;
   let cpuModdedSpeed = cpu.speed;
+  let firstStrikeCPU;
   if (player.status === "Paralyzed"){
     playerModdedSpeed *= 0.5;
   }
@@ -1163,41 +1328,24 @@ function turnInProgress(player, cpu, player_attack, cpu_attack){
   //implement paralysis speed drop
   if (player_attack.priority !== cpu_attack.priority){
     if (player_attack.priority > cpu_attack.priority){
-      let player_output = damageCalculator(player, cpu, player_attack, true);
-      //player attack
-      turnDataLogs.push(turn_data_check(player_output, player, cpu, player_attack));
-
-      if (cpu.hp>0){
-        let cpu_output = damageCalculator(cpu, player, cpu_attack, true);
-        //cpu attack
-        turnDataLogs.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
-      }
+      firstStrikeCPU = false;
     }
     else{
-      let cpu_output = damageCalculator(cpu, player, cpu_attack, true);
-      //cpu attack
-      turnDataLogs.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
-
-      if (player.hp>0){
-        let player_output = damageCalculator(player, cpu, player_attack, true);
-        //player attack
-        turnDataLogs.push(turn_data_check(player_output, player, cpu, player_attack));
-      }
+      firstStrikeCPU = true;
     }
   }
-  else if (playerModdedSpeed > cpuModdedSpeed){
-    //Player Moves first
-    let player_output = damageCalculator(player, cpu, player_attack, true);
-    //player attack
-    turnDataLogs.push(turn_data_check(player_output, player, cpu, player_attack));
-    
-    if (cpu.hp>0){
-      let cpu_output = damageCalculator(cpu, player, cpu_attack, true);
-      //cpu attack
-      turnDataLogs.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
-    }
+  else if(playerModdedSpeed > cpuModdedSpeed){
+    firstStrikeCPU = false;
+  }
+  else if(playerModdedSpeed === cpuModdedSpeed){
+    //If neither is faster, a random winner for speed is selected
+    firstStrikeCPU = random([true, false]);
   }
   else{
+    firstStrikeCPU = true;
+  }
+
+  if (firstStrikeCPU === true){
     //CPU Moves first
     let cpu_output = damageCalculator(cpu, player, cpu_attack, true);
     //cpu attack
@@ -1209,19 +1357,28 @@ function turnInProgress(player, cpu, player_attack, cpu_attack){
       turnDataLogs.push(turn_data_check(player_output, player, cpu, player_attack));
     }
   }
-  turnDataLogs.push(post_turn_effects(player, cpu));
-  turnDataLogs.push(post_turn_effects(cpu, player));
+  else{
+    let player_output = damageCalculator(player, cpu, player_attack, true);
+    //player attack
+    turnDataLogs.push(turn_data_check(player_output, player, cpu, player_attack));
+
+    if (cpu.hp>0){
+      let cpu_output = damageCalculator(cpu, player, cpu_attack, true);
+      //cpu attack
+      turnDataLogs.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
+    }
+  }
+  turnDataLogs.push(postTurnDataConfigure(player, cpu));
+  turnDataLogs.push(postTurnDataConfigure(cpu, player));
   if (cpu.status === "Fainted"){
-    turnDataLogs.push("CPU was defeated!");
-    turnDataLogs.push("CPU: You should be wearing shorts. They're soft and comfortable and easy to move in!");
-    // findBestOffensivePkemon(cpuParty, player)
+    turnDataLogs.push("Come back, "+activeCPU.name+"!");
+    // findBestOffensivePkemono(cpuParty, player)
   }
 
   if (player.status === "Fainted"){
     turnDataLogs.push("Select your next Pokemon");
   }
 
-  turnDataLogs = blank_array_clear(turnDataLogs);
   return turnDataLogs;
 }
 
@@ -1263,8 +1420,6 @@ function turn_data_check(attackResult, attacker, defender, move){
     }
   }
 
-  
-
   if (attacker.confused === true){
     if (attacker.confusedTimer === 0){
       turnDataLogs.push(attacker.name+" snapped out of it's confusion!");
@@ -1275,29 +1430,47 @@ function turn_data_check(attackResult, attacker, defender, move){
     }
     
   }
+
   if (attackResult === "confused"){
     attacker.hp =- damageCalculator(attacker, attacker, movesList.struggle, true);
     turnDataLogs.push("It hurt itself in it's confusion!");
     
     attacking = false;
-    turnDataLogs.push(faint_check(attacker));
+    let isDead = faintChecker(attacker);
+    if (typeof isDead === "string"){
+      turnDataLogs.push(isDead);
+    }
   }
+
   if (attackResult === "paralyzed"){
-    turnDataLogs.push("It's fully paralyzed!");
+    turnDataLogs.push(defender.name+" is fully paralyzed!");
     
     attacking = false;
   }
+
   if (attackResult === "Flinched"){
     turnDataLogs.push(attacker.name+" flinched!");
     attacking = false;
   }
+
   if (attackResult === "boost"){
+    turnDataLogs.push([attacker.name+ " used ",attackToUse.name , "!"]);
     if (attackToUse.name ==="Swords Dance"){
-      turnDataLogs.push([attacker.name+ " used ",attackToUse.name , "!"]);
-      turnDataLogs.push(attacker.name, "'s Attack Sharply increased!")  ;   
+      turnDataLogs.push(attacker.name+ "'s Attack Sharply increased!")  ;
+      attacking = false;   
+    }
+    if (attackToUse.name === "Curse"){
+      turnDataLogs.push(attacker.name+ "'s Attack increased!");
+      turnDataLogs.push(attacker.name+ "'s Defense increased!");
+      turnDataLogs.push(attacker.name+ "'s Speed fell!");
+      attacking = false;
+    }
+    if (attackToUse.name === "Thunder Wave"){
+      attacking === false;
     }
   }
-  if (typeof attackResult !== "number"){ 
+
+  if (typeof attackResult !== "number" && attackResult !== "missed"){ 
     if (attackResult === "healed"){
       attacker.hp += Math.floor(attacker.baseHP/2);
       turnDataLogs.push([attacker.name+ " used ",attackToUse.name , "!"]);
@@ -1367,44 +1540,66 @@ function turn_data_check(attackResult, attacker, defender, move){
       }
     }
   }
-  if (newStatus === true){
+  if (newStatus === true && defender.hp !== 0){
     turnDataLogs.push(defender.name+" was "+defender.status+"!");
+    if (defender.status === "Paralyzed"){
+      turnDataLogs.push("It may be unable to move!");
+    }
     newStatus = false;
   }
-  turnDataLogs.push(faint_check(defender));
-  turnDataLogs = blank_clear(turnDataLogs);
+  if (newConfused === true && defender.hp !== 0){
+    turnDataLogs.push(defender.name+" became Confused!");
+  }
+  let isDead = faintChecker(defender);
+  if (typeof isDead === "string"){
+    turnDataLogs.push();
+  }
   return turnDataLogs;
 }
 
 
 
-function post_turn_effects(pokemon, pokemon_2){
-  let post_results = [];
-  pokemon.statusTimer --;
+function postTurnDataConfigure(pokemon, pokemon_2){
+  let postTurnResults = [];
+  if (pokemon.status !== 0){
+    pokemon.statusTimer --;
+  }
   pokemon.boundTimer --;
   if (pokemon.status === "Poisoned"){
     pokemon.hp -= Math.floor(pokemon.baseHP/8);
-    post_results.push(pokemon.name+" is poisoned!");
-    post_results.push(faint_check(pokemon));
+    postTurnResults.push(pokemon.name+" is poisoned!");
+    let isDead = faintChecker(pokemon);
+    if (typeof isDead === "string"){
+      postTurnResults.push(isDead);
+    }
   }
   if (pokemon.status === "Burned"){
     pokemon.hp -= Math.floor(pokemon.baseHP/16);
-    post_results.push(pokemon.name+" is burned!");
-    post_results.push(faint_check(pokemon));
+    postTurnResults.push(pokemon.name+" is burned!");
+    let isDead = faintChecker(pokemon);
+    if (typeof isDead === "string"){
+      postTurnResults.push(isDead);
+    }
   }
   if (pokemon.status === "Badly Poisoned"){
     pokemon.hp -= Math.floor(pokemon.baseHP/16*-pokemon.statusTimer);
-    post_results.push(pokemon.name+" is badly poisoned!");
-    post_results.push(faint_check(pokemon));
+    postTurnResults.push(pokemon.name+" is badly poisoned!");
+    let isDead = faintChecker(pokemon);
+    if (typeof isDead === "string"){
+      postTurnResults.push(isDead);
+    }
   }
   if (pokemon.bound === true){
     if (pokemon.boundTimer > 0){
       pokemon.hp -= Math.floor(pokemon.baseHP/8);
-      post_results.push(pokemon.name+" was hurt by"+pokemon.boundBy+"!");
-      post_results.push(faint_check(pokemon));
+      postTurnResults.push(pokemon.name+" was hurt by"+pokemon.boundBy+"!");
+      let isDead = faintChecker(pokemon);
+      if (typeof isDead === "string"){
+        postTurnResults.push(isDead);
+      }
     }
     else{
-      post_results.push(pokemon.name+" was freed from "+pokemon.boundBy);
+      postTurnResults.push(pokemon.name+" was freed from "+pokemon.boundBy);
       pokemon.boundBy = "";
       pokemon.bound = false;
     }
@@ -1412,40 +1607,26 @@ function post_turn_effects(pokemon, pokemon_2){
   if (pokemon.leechSeed === true){
     pokemon.hp -= Math.floor(pokemon.baseHP/8);
     pokemon_2.hp += Math.floor(pokemon.baseHP/8);
-    post_results.push(pokemon.name+"'s health was sapped by Leech Seed!");
-    post_results.push(faint_check(pokemon));
+    postTurnResults.push(pokemon.name+"'s health was sapped by Leech Seed!");
+    let isDead = faintChecker(pokemon);
+    if (typeof isDead === "string"){
+      postTurnResults.push(isDead);
+    }
   }
-  post_results = blank_clear(post_results);
-  return post_results;
+  if (postTurnResults.length > 0){
+    return postTurnResults;
+  }
 }
 
 
-function faint_check(pokemon){
+function faintChecker(pokemon){
   if (pokemon.hp <= 0){
     pokemon.hp = 0;
     pokemon.status = "Fainted";
     return pokemon.name+ " fainted!";
   }
-  return "";
 }
-function blank_clear(list){
-  let new_list = list;
-  for(let i = new_list.length-1; i>=0; i --){
-    if (new_list[i].length<=1){
-      new_list.splice(i, 1);
-    }
-  }
-  return new_list;
-}
-function blank_array_clear(list){
-  let new_list = list;
-  for(let i = new_list.length-1; i>=0; i --){
-    if (new_list[i] === []){
-      new_list.splice(i, 1);
-    }
-  }
-  return new_list;
-}
+
 
 function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
   //data guide| 0 = has-FILLER-Move? | 1 = FILLER-MoveNumber
@@ -1461,19 +1642,19 @@ function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
   //Checks through moves, and learns what the options are
   //IF multiple of the same type of move(boost/heal) exist, it WOULD choose the move further in the list, but no reliable movesets would feature 2 boost moves or 2 healing moves so I'm not designing an evaluator for those conditions
   for (let i = 0; i < cpu.moves.length; i++){
-    //Checks if it has a priority move
+    //Checks if curreny move has priority
     if (cpu.moves[i].priority>0){
       priorityCheck[0] = true;
       priorityCheck[1] = i;
     }
 
-    //Checks if it has a healing move
+    //Checks if current move heals
     if (cpu.moves[i].category === healing){
       healCheck[0] = true;
       healCheck[1] = i;
     }
 
-    //Checks if it has a boosting move
+    //Checks if current
     if (cpu.moves[i].category === boost){
       boostCheck[0] = true;
       boostCheck[1] = i;
@@ -1538,12 +1719,13 @@ function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
   //Checks if it would be in kill range next turn (if it were faced with another CPU), and prepares to heal in response to avoid this
   if (cpu.hp < 2*damageCalculator(player, cpu, player.moves[findBestDamage(player, cpu)], false) && playerSpeed > cpuSpeed){
     if (healCheck[0] === true){
+      panicModeCounter += 0.5;
       return cpu.moves[healCheck[1]];
     }
   }
 
   //If near full health, it will use a boosting move
-  if (cpu.hp > cpu.baseHP*0.75){
+  if (cpu.hp > cpu.baseHP*0.7 && (cpu.baseHP > 2*damageCalculator(player, cpu, player.moves[findBestDamage(player, cpu)], false)||playerSpeed > cpuSpeed)){
     if(boostCheck[0] === true){
       return cpu.moves[boostCheck[1]];
     }
@@ -1559,30 +1741,124 @@ function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
 function findBestOverallMove(attacker, defender){
   let resultList = [];
   let bestOutcome = 0;
-  for (let i = 0; i < attacker.moves.length; i++){
+  for (let i = 0; i < 4; i++){
     let riskRecalc = damageCalculator(attacker, defender, attacker.moves[i], false);
     riskRecalc = (riskRecalc*2 + attacker.moves[i].accuracy)/3;
     resultList.push(riskRecalc);
-    if (riskRecalc < resultList[bestOutcome] || resultList.length === 1){
+    if (riskRecalc > resultList[bestOutcome] || resultList.length === 0){
       bestOutcome = i;
     }
   }
   return bestOutcome;
 }
 
+function pokemonSwitch(party, isPlayer, fainted){
+  if (key === "1"||key === "2"||key === "3"||key === "4"||key === "5"||key === "6"){
+    key = int(key);
+  }
+  if (isPlayer === true){
+    let new_result;
+    if (typeof key !== "number"){
+      return "Type in the Slot Number of the Pokemon you wish to send out next.";
+    }
+    else{
+      let result = playerParty.base_list[key-1];
+      if (result.status === "fainted"){
+        return "This Pokemon is unable to battle!";
+      }
+      if (result === activePlayer){
+        return "This Pokemon is already switching out!";
+      }
+      else{
+        return result;
+      }
+    }
+  }
+  else{
+    return cpuParty.base_list[findBestOffensivePokemon(party, activePlayer)];
+  }
+}
+function keyTyped(){
+  
+  if (key === " "){
+    if (resetReader === true){
+      data = turnInProgress(activePlayer, activeCPU, activePlayer.moves[moveSelected], aiMoveSelect(activeCPU, activePlayer, activeCPU.speed, activePlayer.speed));
+      textInterface = data[readerProgress][0];
+    }
+    if (readerBusy === false){
+      if (data[readerProgress] !== null){
+        readerBusy = true;
+      }
+      else{
+        resetReader = true;
+      }
+    }
+    else if (readerBusy === true && readerProgress >= 0){
+      if (data[readerProgress+1] !== null){
+        if (data[readerProgress] === []){
+          //Ignore empty Arrays
+          readerProgress++;
+        }
+        if (typeof data[readerProgress] === "object"){
+          textInterface = data[readerProgress][0];
+          data[readerProgress].shift();
+          //reads the data then removes it from the list until the list is empty
+        }
+        else{
+          textInterface = data[readerProgress][0];
+          readerProgress ++;
+        }
+      }
+      else{
+        readerBusy = false;
+        resetReader = true;
+      }
+    }
+  }
+}
 
 class Party {
   constructor(){
-    this.slot_1 = random(pokemon_list),
-    this.slot_2 = random(pokemon_list),
-    this.slot_3 = random(pokemon_list),
-    this.slot_4 = random(pokemon_list),
-    this.slot_5 = random(pokemon_list),
-    this.slot_6 = random(pokemon_list),
+    this.slot_1 = 0,
+    this.slot_2 = 0,
+    this.slot_3 = 0,
+    this.slot_4 = 0,
+    this.slot_5 = 0,
+    this.slot_6 = 0,
     this.base_list = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6];
   }
-  summary(x, y){
-    let temporaryPartyList = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6];
+  intitalize(){
+    let partyInitial = []
+    for (let i = 0; i<6; i++){
+      let pokemonNumber = random(pokemonList.length);
+      partyInitial.push(pokemonList[pokemonNumber]);
+      pokemonList.splice(pokemonNumber, 1);
+    }
+    this.slot_1 = partyInitial[0];
+    this.slot_2 = partyInitial[1];
+    this.slot_3 = partyInitial[2];
+    this.slot_4 = partyInitial[3];
+    this.slot_5 = partyInitial[4];
+    this.slot_6 = partyInitial[5];
+  }
+  summary(x, y, all, cpu){
+    let temporaryPartyList;
+    if (all === true){
+      temporaryPartyList = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6];
+    }
+    else{
+      if (cpu === true){
+        temporaryPartyList = [activeCPU];
+      }
+      else{
+        temporaryPartyList = [activePlayer]; 
+      }
+    }
+    noStroke();
+    fill(200, 200, 100);
+    rect(x, y-20, 200, temporaryPartyList.length*80);
+   
+    fill("black");
     let offset = y;
     for (let i = 0; i<temporaryPartyList.length; i++){
       textFont("Courier New");
@@ -1613,5 +1889,6 @@ class Party {
       text(temporaryPartyList[i].moves[3].pp, x+temporaryPartyList[i].moves[3].name.length*8, offset+55);
       offset += 80;
     }
+    
   }
 }
