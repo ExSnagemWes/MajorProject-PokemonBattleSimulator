@@ -5,6 +5,7 @@
 // Extra for Experts:
 // - describe what you did to take this project "above and beyond"
 //https://github.com/smogon/damage-calc/blob/master/calc/src/mechanics/gen12.ts(line 157)(line 211)
+//https://www.spriters-resource.com/game_boy_advance/pokemonfireredleafgreen/sheet/3866/
 //line 255 damage equation copied and slightly modified for variables that would be predefined in this instance
 //The AI System is derived from my analysis of competetive play via play.pokemonshowdown.com| I have learned much about general and smart play, as well as bad, including predictive skills which I have mostly programmed onto this computer
 let playerParty;
@@ -12,6 +13,7 @@ let data;
 let cpuParty;
 let activePlayer;
 let activeCPU;
+let backgroundMap;
 let trainerClasses = ["Hiker", "Youngster", "Beauty", "Trainer", "Bugcatcher", "Pokemaniac", "Triathlete", "Ninja", "Wanderer", "Gentleman"];
 let names = ["Todd", "Valerie", "Dave", "Kianna", "Mathew", "Vince", "Carl", "Billie", "Joanna", "Keanu", "Ike", "Natalia", "Taylor", "Emma", "Winston", "Wade", "James", "Kari", "Mark", "Bean", "Emilia", "Kenneth", "Nigel", "Cassandra", "Rias"];
 let opponentName;
@@ -58,7 +60,6 @@ let playerY;
 let cpuX;
 let cpuY;
 let spriteScale;
-
 
 let movesList = {
   //Defines all attacks and effects, which will be broken down and read in Damage Checker
@@ -233,15 +234,15 @@ let movesList = {
     priority: 0,
     effect: [0,0]},
   
-  hydro_pump: {
-    name: "Hydro Pump",
+  scald: {
+    name: "Scald",
     type: water,
-    power: 120,
-    accuracy: 80,
-    pp: 5,
+    power: 80,
+    accuracy: 100,
+    pp: 15,
     category: special,
     priority: 0,
-    effect: [0,0]},
+    effect: [5,30]},
 
   ice_beam: {
     name: "Ice Beam",
@@ -443,7 +444,7 @@ function preload(){
   pokemon = {
     dragonite: {
       name: "Dragonite",
-      sprites: [loadImage("sprites/dragonite_front.gif"), loadImage("sprites/dragonite_back.gif")],
+      sprites: [loadImage("sprites/dragonite_front.png"), loadImage("sprites/dragonite_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -478,7 +479,7 @@ function preload(){
     },
     garchomp: {
       name: "Garchomp",
-      sprites: [loadImage("sprites/garchomp_front.gif"), loadImage("sprites/garchomp_back.gif")],
+      sprites: [loadImage("sprites/garchomp_front.png"), loadImage("sprites/garchomp_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -513,7 +514,7 @@ function preload(){
     },
     charizard: {
       name: "Charizard",
-      sprites: [loadImage("sprites/charizard_front.gif"), loadImage("sprites/charizard_back.gif")],
+      sprites: [loadImage("sprites/charizard_front.png"), loadImage("sprites/charizard_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -548,7 +549,7 @@ function preload(){
     },
     blastoise: {
       name: "Blastoise",
-      sprites: [loadImage("sprites/blastoise_front.gif"), loadImage("sprites/blastoise_back.gif")],
+      sprites: [loadImage("sprites/blastoise_front.png"), loadImage("sprites/blastoise_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -576,14 +577,14 @@ function preload(){
       },
       type1: water,
       type2: none,
-      moves: [movesList.hydro_pump,
+      moves: [movesList.scald,
         movesList.dragon_pulse,
         movesList.ice_beam,
         movesList.aura_sphere]
     },
     venusaur: {
       name: "Venusaur",
-      sprites: [loadImage("sprites/venusaur_front.gif"), loadImage("sprites/venusaur_back.gif")],
+      sprites: [loadImage("sprites/venusaur_front.png"), loadImage("sprites/venusaur_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -618,7 +619,7 @@ function preload(){
     },
     articuno: {
       name: "Articuno",
-      sprites: [loadImage("sprites/articuno_front.gif"), loadImage("sprites/articuno_back.gif")],
+      sprites: [loadImage("sprites/articuno_front.png"), loadImage("sprites/articuno_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -653,7 +654,7 @@ function preload(){
     },
     tyranitar: {
       name: "Tyranitar",
-      sprites: [loadImage("sprites/tyranitar_front.gif"), loadImage("sprites/tyranitar_back.gif")],
+      sprites: [loadImage("sprites/tyranitar_front.png"), loadImage("sprites/tyranitar_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -688,7 +689,7 @@ function preload(){
     },
     aggron: {
       name: "Aggron",
-      sprites: [loadImage("sprites/aggron_front.gif"), loadImage("sprites/aggron_back.gif")],
+      sprites: [loadImage("sprites/aggron_front.png"), loadImage("sprites/aggron_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -723,7 +724,7 @@ function preload(){
     },
     heracross: {
       name: "Heracross",
-      sprites: [loadImage("sprites/heracross_front.gif"), loadImage("sprites/heracross_back.gif")],
+      sprites: [loadImage("sprites/heracross_front.png"), loadImage("sprites/heracross_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -758,7 +759,7 @@ function preload(){
     },
     gengar: {
       name: "Gengar",
-      sprites: [loadImage("sprites/gengar_front.gif"), loadImage("sprites/gengar_back.gif")],
+      sprites: [loadImage("sprites/gengar_front.png"), loadImage("sprites/gengar_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -793,7 +794,7 @@ function preload(){
     },
     zapdos: {
       name: "Zapdos",
-      sprites: [loadImage("sprites/zapdos_front.gif"), loadImage("sprites/zapdos_back.gif")],
+      sprites: [loadImage("sprites/zapdos_front.png"), loadImage("sprites/zapdos_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -828,7 +829,7 @@ function preload(){
     },
     moltres: {
       name: "Moltres",
-      sprites: [loadImage("sprites/moltres_front.gif"), loadImage("sprites/moltres_back.gif")],
+      sprites: [loadImage("sprites/moltres_front.png"), loadImage("sprites/moltres_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -881,13 +882,18 @@ function setup() {
   activePlayer = playerParty.slot_1;
   activeCPU = cpuParty.slot_1;
   frameRate(15);
+  cpuX = width/2 + spriteScale*1.5;
+  cpuY = height/2 - spriteScale;
+  playerX = width/2 - spriteScale*1.5;
+  playerY = height/2 + spriteScale*0.9;
+  noSmooth();
 }
 
 function draw() {
-  background(130, 255, 100)
-  imageMode(CENTER)
-  image(activePlayer.sprites[1], 200, height-200, activePlayer.sprites[1].width*4, activePlayer.sprites[1].height*4);
-  image(activeCPU.sprites[0], 400, height-400, activeCPU.sprites[0].width*2.5, activeCPU.sprites[0].height*2.5);
+  background(130, 255, 100);
+  imageMode(CENTER);
+  image(activeCPU.sprites[0], cpuX, cpuY, spriteScale*2.5, spriteScale*2.5);
+  image(activePlayer.sprites[1], playerX, playerY, spriteScale*4, spriteScale*4);
   
   textFont("Cambria");
   textSize(width/33);
@@ -895,11 +901,11 @@ function draw() {
   if (typeof textInterface === "object"){
     text(textInterface[0]+textInterface[1]+textInterface[2], 0, height-50);
     console.log(textInterface[1]);
+    //moveAnimator(textInterface[1])
   }
   else{
-    text(textInterface, 0, height-50);
+    text(textInterface, 0, height);
   }
-  noSmooth();
   if (activePlayer.status !== "Fainted"){
     playerParty.summary(0,20, false, false);
   }
@@ -909,18 +915,17 @@ function draw() {
   if (activePlayer.status === "Fainted"){
     playerParty.summary(0,20, true, false);
     let switchOutResult = pokemonSwitch(playerParty, true, true);
-    if (typeof switchOutResult !== "string"){
+    if (typeof switchOutResult !== "string" && switchOutResult !== null){
+      console.log(switchOutResult);
       activePlayer = switchOutResult;
       data.push("Go! "+ activePlayer.name + "!");
-    }
-    else{
-      data.push(switchOutResult);
     }
   }
   if (activeCPU.status === "Fainted"){
     activeCPU = pokemonSwitch(cpuParty, false, true);
     if (activeCPU === null){
       textInterface = opponentName+" was defeated!";
+      return;
     }
     data.push("Take him out, "+activeCPU.name+"!");
   }
@@ -1914,11 +1919,9 @@ function pokemonSwitch(party, isPlayer, fainted){
   if (key === "1"||key === "2"||key === "3"||key === "4"||key === "5"||key === "6"){
     key = int(key);
   }
-  if (isPlayer === true){
-    let new_result;
+  if (isPlayer === true && readerBusy === false){
     if (typeof key !== "number" && key !== " " && switchStarted === false){
       switchStarted === true;
-      return "Type in the Slot Number of the Pokemon you wish to send out next.";
     }
     else{
       if (key !== " "){
@@ -1937,7 +1940,7 @@ function pokemonSwitch(party, isPlayer, fainted){
     }
     return "";
   }
-  else{
+  else if (readerBusy === false){
     return cpuParty.base_list[findBestOffensivePokemon(party, activePlayer)];
   }
 }
@@ -1946,18 +1949,19 @@ function keyTyped(){
   if (key === " "){
     if (resetReader === true && readerBusy === false){
       data = turnInProgress(activePlayer, activeCPU, activePlayer.moves[moveSelected], aiMoveSelect(activeCPU, activePlayer, activeCPU.speed, activePlayer.speed));
+      readerBusy = true;
       //Sets the text reader to the beginning of the data pile
     }
-    if (readerBusy === false){
-      if (data[readerProgress] !== null){
-        readerBusy = true;
-      }
-      else{
-        resetReader = true;
-        readerBusy = false;
-      }
-    }
-    else if (readerBusy === true && readerProgress >= 0 && readerProgress<data.length){
+    // if (readerBusy === false){
+    //   if (data[readerProgress] !== null){
+    //     readerBusy = true;
+    //   }
+    //   else{
+    //     resetReader = true;
+    //     readerBusy = false;
+    //   }
+    // }
+    if (readerBusy === true && readerProgress<data.length){
       while (typeof data[readerProgress] !== "string" && data[readerProgress].length <= 0){
         //Ignore non-useful data
         readerProgress++;
