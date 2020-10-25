@@ -27,7 +27,7 @@ let newConfused = 0;
 let gameMode = "HP";
 let panicModeCounter = 0;
 let readerBusy = false;
-let readerProgress = 0;
+let readerProgress = -1;
 let resetReader = true;
 let switchStarted = false;
 let textInterface = "Press 'Spacebar' to begin, and '-' and '=/+' to navigate your attack choice";
@@ -864,7 +864,7 @@ function preload(){
     }
   };
   pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres];
-
+  backgroundMap = random([loadImage("backgrounds/back_0.png"), loadImage("backgrounds/back_1.png"), loadImage("backgrounds/back_2.png"), loadImage("backgrounds/back_3.png"), loadImage("backgrounds/back_4.png"), loadImage("backgrounds/back_5.png"), loadImage("backgrounds/back_6.png"), loadImage("backgrounds/back_7.png"), loadImage("backgrounds/back_8.png"), loadImage("backgrounds/back_9.png")]);
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -882,54 +882,18 @@ function setup() {
   activePlayer = playerParty.slot_1;
   activeCPU = cpuParty.slot_1;
   frameRate(15);
-  cpuX = width/2 + spriteScale*1.5;
-  cpuY = height/2 - spriteScale;
-  playerX = width/2 - spriteScale*1.5;
-  playerY = height/2 + spriteScale*0.9;
+  cpuX = width/1.8 + spriteScale*1.5;
+  cpuY = height/1.7 - spriteScale;
+  playerX = width/2.2 - spriteScale*1.5;
+  playerY = height/2 + spriteScale*1.3;
   noSmooth();
 }
 
 function draw() {
-  background(130, 255, 100);
-  imageMode(CENTER);
-  image(activeCPU.sprites[0], cpuX, cpuY, spriteScale*2.5, spriteScale*2.5);
-  image(activePlayer.sprites[1], playerX, playerY, spriteScale*4, spriteScale*4);
-  
-  textFont("Cambria");
-  textSize(width/33);
-  //Checks if the data is a move it needs to animate
-  if (typeof textInterface === "object"){
-    text(textInterface[0]+textInterface[1]+textInterface[2], 0, height-50);
-    console.log(textInterface[1]);
-    //moveAnimator(textInterface[1])
-  }
-  else{
-    text(textInterface, 0, height);
-  }
-  if (activePlayer.status !== "Fainted"){
-    playerParty.summary(0,20, false, false);
-  }
-  cpuParty.summary(width-200,20, false, true);
-
-
-  if (activePlayer.status === "Fainted"){
-    playerParty.summary(0,20, true, false);
-    let switchOutResult = pokemonSwitch(playerParty, true, true);
-    if (typeof switchOutResult !== "string" && switchOutResult !== null){
-      console.log(switchOutResult);
-      activePlayer = switchOutResult;
-      data.push("Go! "+ activePlayer.name + "!");
-    }
-  }
-  if (activeCPU.status === "Fainted"){
-    activeCPU = pokemonSwitch(cpuParty, false, true);
-    if (activeCPU === null){
-      textInterface = opponentName+" was defeated!";
-      return;
-    }
-    data.push("Take him out, "+activeCPU.name+"!");
-  }
-  key = "";
+  //background(130, 255, 100);
+  image(backgroundMap, width/2, height/2, width, height);
+  battleInterface();
+  switchOutCheck();
 }
 
 
@@ -1365,10 +1329,10 @@ function typeEffectivenessChecker(pokemon_type, move_type){
 }
 function effectDescriptions(effectData){
   if (effectData[0] === -1){
-    return "Attacks before most other moves, regardless of the User's Speed stat.";
+    return "Attacks before most other moves,\nregardless of the User's Speed stat.";
   }
   if (effectData[0] === 0){
-    return "Deals damage to the target, no special effects. Usually either a strong or reliable move.";
+    return "Deals damage to the target, no special effects.\nUsually either a strong or reliable move.";
   }
   if (effectData[0] === 1){
     return "Has a "+effectData[1]+"% chance to inflict confusion on the target.";
@@ -1384,13 +1348,13 @@ function effectDescriptions(effectData){
     return "Increases the user's attack by "+effectData[2]+" stages.";
   }
   if (effectData[0] === 5){
-    return "Has a "+effectData[1]+"% chance to inflict a burn, halving the Attack \n stat of the target and inflicting passive damage.";
+    return "Has a "+effectData[1]+"% chance to inflict a burn,\nhalving the Attack stat of the target \nand inflicting passive damage.";
   }
   if (effectData[0] === 6){
-    return "Has a "+effectData[1]+"% chance to lower the Target's Special Defense by "+effectData[2]+" stages, \nincreasing damage dealt by future Special attacks.";
+    return "Has a "+effectData[1]+"% chance to lower the Target's Special Defense by "+effectData[2]+" stages, \nincreasing damage dealt by future \nSpecial attacks.";
   }
   if (effectData[0] === 7){
-    return "Has a "+effectData[1]+"% chance to freeze the target, incapacitating it until it thaws out.";
+    return "Has a "+effectData[1]+"% chance to freeze the target,\nincapacitating it until it thaws out.";
   }
   if (effectData[0] === 8){
     return "Has a "+effectData[1]+"% chance to inflict poison on the target, \nwittling away 1/8 max HP per turn.";
@@ -1399,22 +1363,22 @@ function effectDescriptions(effectData){
     return "Deals double the damage against a target with a status condition.";
   }
   if (effectData[10] ===10){
-    return "Is Super Effective against Water Type Pokemon, despite being Ice-Type.";
+    return "Is Super Effective against Water Type Pokemon,\ndespite being Ice-Type.";
   }
   if (effectData[0] === 11){
     return "Has a higher Critical Hit Ratio.";
   }
   if (effectData[0] === 12){
-    return "Has a "+effectData[1]+"% chance to lower thee target's Defense by"+effectData[2]+"stages, \nincreasing damage dealt by future Physical attacks.";
+    return "Has a "+effectData[1]+"% chance to lower the target's Defense by"+effectData[2]+" stages, \nincreasing damage dealt by future Physical attacks.";
   }
   if (effectData[0] === 13){
-    return "If the User is slower than the target, this deals double damage.";
+    return "If the User is slower than the target,\nthis deals double damage.";
   }    
   if (effectData[0] === 14){
-    return "The user falls asleep for 2 turns, healing all status and damage.";
+    return "The user falls asleep for 2 turns,\nhealing all status and damage.";
   }
   if (effectData[0] === 15){
-    return "Selects a random attack to use, but only works when the User is sleeping.";
+    return "Selects a random attack to use,\nbut only works when the User is sleeping.";
   }
   if (effectData[0] === 16){
     return "Hits hard, but lowers both the user's Defense and Special Defense in the process";
@@ -1511,23 +1475,23 @@ function turnInProgress(player, cpu, player_attack, cpu_attack){
     //CPU Moves first
     let cpu_output = damageCalculator(cpu, player, cpu_attack, true);
     //cpu attack
-    turnDataLogs.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
+    turnDataLogs.push(midTurnDataConfigure(cpu_output, cpu, player, cpu_attack));
 
     if (player.hp>0){
       let player_output = damageCalculator(player, cpu, player_attack, true);
       //player attack
-      turnDataLogs.push(turn_data_check(player_output, player, cpu, player_attack));
+      turnDataLogs.push(midTurnDataConfigure(player_output, player, cpu, player_attack));
     }
   }
   else{
     let player_output = damageCalculator(player, cpu, player_attack, true);
     //player attack
-    turnDataLogs.push(turn_data_check(player_output, player, cpu, player_attack));
+    turnDataLogs.push(midTurnDataConfigure(player_output, player, cpu, player_attack));
 
     if (cpu.hp>0){
       let cpu_output = damageCalculator(cpu, player, cpu_attack, true);
       //cpu attack
-      turnDataLogs.push(turn_data_check(cpu_output, cpu, player, cpu_attack));
+      turnDataLogs.push(midTurnDataConfigure(cpu_output, cpu, player, cpu_attack));
     }
   }
   turnDataLogs.push(postTurnDataConfigure(player, cpu));
@@ -1544,7 +1508,7 @@ function turnInProgress(player, cpu, player_attack, cpu_attack){
   return turnDataLogs;
 }
 
-function turn_data_check(attackResult, attacker, defender, move){
+function midTurnDataConfigure(attackResult, attacker, defender, move){
   //Starts by checking if status ailments would inhibit attacking (decided in the isBattle portion of damageCalculator)
   let turnDataLogs = [];
   let attackToUse = move;
@@ -1605,7 +1569,7 @@ function turn_data_check(attackResult, attacker, defender, move){
   }
 
   if (attackResult === "paralyzed"){
-    turnDataLogs.push(defender.name+" is fully paralyzed!");
+    turnDataLogs.push(attacker.name+" is fully paralyzed!");
     
     attacking = false;
   }
@@ -1915,7 +1879,124 @@ function findBestOverallMove(attacker, defender){
   return bestOutcome;
 }
 
+
+
+function keyTyped(){
+  
+  if (key === " "){
+    textReader();
+  }
+
+  //If these variables go over the limit, they will be reset to the opposite end of the sprectrum, allowing you to scroll with only 1 key effectively
+  if (key === "-"){
+    if (moveSelected > 0){
+      moveSelected --;
+    }
+    else{
+      moveSelected = 3;
+    }
+
+  }
+  if (key === "="){
+    if (moveSelected < 3){
+      moveSelected ++;
+    }
+    else{
+      moveSelected = 0;
+    }
+  }
+}
+
+function textReader(){
+  if (resetReader === true && readerBusy === false){
+    data = turnInProgress(activePlayer, activeCPU, activePlayer.moves[moveSelected], aiMoveSelect(activeCPU, activePlayer, activeCPU.speed, activePlayer.speed));
+    readerBusy = true;
+    resetReader = false;
+    //Sets the text reader to the beginning of the data pile
+  }
+  //Prevent a prior underflow error
+  if (readerProgress < 0){
+    readerProgress = 0;
+  }
+  if (readerBusy === true && readerProgress<data.length){
+    //Ignore non-useful data
+    if (data[readerProgress !== null]){
+      while (typeof data[readerProgress] === "object" && data[readerProgress].length === 0){
+        readerProgress++;
+        if (readerProgress >= data.length){
+          readerBusy = false;
+          resetReader = true;
+        }
+      }
+    }
+    if (readerProgress<data.length){
+      
+      if (typeof data[readerProgress] === "object" && data[readerProgress !== null]){
+        textInterface = data[readerProgress][0];
+        data[readerProgress].shift();
+        //reads the data then removes it from the list until the list is empty, then procedes to move onto the next list
+      }
+      else if (typeof data[readerProgress] === "string"){
+        textInterface = data[readerProgress];
+        readerProgress ++;
+      }
+    }
+  }
+  if(readerProgress >= data.length){
+    readerBusy = false;
+    resetReader = true;
+    readerProgress = 0;
+    
+  }
+}
+
+function battleInterface(){
+  imageMode(CENTER);
+  image(activeCPU.sprites[0], cpuX, cpuY, spriteScale*2.5, spriteScale*2.5);
+  image(activePlayer.sprites[1], playerX, playerY, spriteScale*4, spriteScale*4);
+  
+  fill(255, 255, 255, 200);
+  rect(0, height-50, width, 50);
+  fill(0);
+  textFont("Cambria");
+  textSize(width/33);
+  //Checks if the data is a move it needs to animate
+  if (typeof textInterface === "object"){
+    text(textInterface[0]+textInterface[1]+textInterface[2], 0, height-25);
+    console.log(textInterface[1]);
+    //moveAnimator(textInterface[1])
+  }
+  else{
+    text(textInterface, 0, height-25);
+  }
+  playerParty.summary(0,20, activePlayer.status === "Fainted", false);
+
+  cpuParty.summary(width-200,20, false, true);
+
+}
+
+function switchOutCheck(){
+  if (activePlayer.status === "Fainted" && readerBusy === false && readerProgress){
+    let switchOutResult = pokemonSwitch(playerParty, true, true);
+    if (typeof switchOutResult !== "string" && switchOutResult !== null){
+      console.log(switchOutResult);
+      activePlayer = switchOutResult;
+      data.push("Go! "+ activePlayer.name + "!");
+    }
+  }
+  if (activeCPU.status === "Fainted"){
+    activeCPU = pokemonSwitch(cpuParty, false, true);
+    if (activeCPU === null){
+      textInterface = opponentName+" was defeated!";
+      return;
+    }
+    data.push("Take him out, "+activeCPU.name+"!");
+  }
+  key = "";
+  
+}
 function pokemonSwitch(party, isPlayer, fainted){
+  console.log("Switch Initiated");
   if (key === "1"||key === "2"||key === "3"||key === "4"||key === "5"||key === "6"){
     key = int(key);
   }
@@ -1944,58 +2025,6 @@ function pokemonSwitch(party, isPlayer, fainted){
     return cpuParty.base_list[findBestOffensivePokemon(party, activePlayer)];
   }
 }
-function keyTyped(){
-  
-  if (key === " "){
-    if (resetReader === true && readerBusy === false){
-      data = turnInProgress(activePlayer, activeCPU, activePlayer.moves[moveSelected], aiMoveSelect(activeCPU, activePlayer, activeCPU.speed, activePlayer.speed));
-      readerBusy = true;
-      //Sets the text reader to the beginning of the data pile
-    }
-    // if (readerBusy === false){
-    //   if (data[readerProgress] !== null){
-    //     readerBusy = true;
-    //   }
-    //   else{
-    //     resetReader = true;
-    //     readerBusy = false;
-    //   }
-    // }
-    if (readerBusy === true && readerProgress<data.length){
-      while (typeof data[readerProgress] !== "string" && data[readerProgress].length <= 0){
-        //Ignore non-useful data
-        readerProgress++;
-        if (readerProgress >= data.length){
-          readerBusy = false;
-          resetReader = true;
-        }
-      }
-      if (readerProgress<data.length){
-        if (typeof data[readerProgress] === "object"){
-          textInterface = data[readerProgress][0];
-          data[readerProgress].shift();
-          //reads the data then removes it from the list until the list is empty, then procedes to move onto the next list
-        }
-        else{
-          textInterface = data[readerProgress];
-          readerProgress ++;
-        }
-      }
-    }
-    if(activePlayer.status !== "Fainted" || readerProgress >= data.length){
-      readerBusy = false;
-      resetReader = true;
-    }
-    
-  }
-  if (key === "-" && moveSelected > 0){
-    moveSelected --;
-  }
-  if (key === "=" && moveSelected < 3){
-    moveSelected ++;
-  }
-}
-
 class Party {
   constructor(){
     this.slot_1 = 0,
@@ -2023,6 +2052,7 @@ class Party {
   }
   summary(x, y, all, cpu){
     textSize(12);
+    
     let temporaryPartyList;
     if (all === true){
       temporaryPartyList = [this.slot_1, this.slot_2, this.slot_3, this.slot_4, this.slot_5, this.slot_6];
@@ -2035,10 +2065,11 @@ class Party {
         temporaryPartyList = [activePlayer]; 
       }
     }
-    noStroke();
-    fill(200, 200, 100);
-    rect(x, y-20, 200, temporaryPartyList.length*80);
-   
+    strokeWeight(4);
+    stroke(100, 100, 100);
+    fill(255);
+    rect(x-4, y-20, 206, temporaryPartyList.length*80);
+    strokeWeight(0.5);
     fill("black");
     let offset = y;
     for (let i = 0; i<temporaryPartyList.length; i++){
@@ -2060,13 +2091,13 @@ class Party {
         text(temporaryPartyList[i].status, x, offset);
       }
       text(temporaryPartyList[i].moves[0].name, x, offset+25);
-      text(temporaryPartyList[i].moves[0].pp, x+temporaryPartyList[i].moves[0].name.length*8, offset+25);
+      //text(temporaryPartyList[i].moves[0].pp, x+temporaryPartyList[i].moves[0].name.length*8, offset+25);
       text(temporaryPartyList[i].moves[1].name, x, offset+35);
-      text(temporaryPartyList[i].moves[1].pp, x+temporaryPartyList[i].moves[1].name.length*8, offset+35);
+      //text(temporaryPartyList[i].moves[1].pp, x+temporaryPartyList[i].moves[1].name.length*8, offset+35);
       text(temporaryPartyList[i].moves[2].name, x, offset+45);
-      text(temporaryPartyList[i].moves[2].pp, x+temporaryPartyList[i].moves[2].name.length*8, offset+45);
+      //text(temporaryPartyList[i].moves[2].pp, x+temporaryPartyList[i].moves[2].name.length*8, offset+45);
       text(temporaryPartyList[i].moves[3].name, x, offset+55);
-      text(temporaryPartyList[i].moves[3].pp, x+temporaryPartyList[i].moves[3].name.length*8, offset+55);
+      //text(temporaryPartyList[i].moves[3].pp, x+temporaryPartyList[i].moves[3].name.length*8, offset+55);
       if (all === false && cpu === false){
         textStyle(BOLD);
         text("|"+temporaryPartyList[i].moves[moveSelected].name+"|", x+temporaryPartyList[i].moves[moveSelected].name.length*4, offset+70);
