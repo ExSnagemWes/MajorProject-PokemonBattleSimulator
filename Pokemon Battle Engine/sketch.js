@@ -19,6 +19,7 @@ let names = ["Todd", "Valerie", "Dave", "Kianna", "Mathew", "Vince", "Carl", "Bi
 let opponentName;
 let physical = "Physical";
 let special = "Special";
+let shock = "Shock";
 let healing = "Healing";
 let boost = "Boost/Cripple";
 let status = "Other";
@@ -84,7 +85,6 @@ let movesList = {
     priority: 0,
     effect: [0, 0]},
   
-
   hurricane: {
     name: "Hurricane",
     type: flying,
@@ -234,6 +234,15 @@ let movesList = {
     category: special,
     priority: 0,
     effect: [0,0]},
+  psystrike: {
+    name: "Psystrike",
+    type: psychic,
+    power: 100,
+    accuracy: 100,
+    pp: 10,
+    category: shock,
+    priority: 0,
+    effect: [-2,0]},
   
   scald: {
     name: "Scald",
@@ -288,6 +297,16 @@ let movesList = {
   synthesis: {
     name: "Synthesis",
     type: grass,
+    power: 0,
+    accuracy: 0,
+    pp: 10,
+    category: healing,
+    priority: 0,
+    effect: [2, 100]},
+
+  recover: {
+    name: "recover",
+    type: normal,
     power: 0,
     accuracy: 0,
     pp: 10,
@@ -434,7 +453,17 @@ let movesList = {
     pp: 10, 
     category: boost,
     priority: 0,
-    effect: [17, 100]}
+    effect: [17, 100]},
+
+  calm_mind:{
+    name: "Calm Mind",
+    type: psychic,
+    power: 0,
+    accuracy: 100, 
+    pp: 30, 
+    category: boost,
+    priority: 0,
+    effect: [20, 100]}
 };
 
 
@@ -862,9 +891,44 @@ function preload(){
         movesList.fire_blast, 
         movesList.roost, 
         movesList.mystical_fire]
+    },
+    mewtwo: {
+      name: "Mewtwo",
+      sprites: [loadImage("sprites/mewtwo_front.png"), loadImage("sprites/mewtwo_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 378,
+      hp: 378,
+      attack: 232,
+      defense: 216,
+      sp_atk: 447,
+      sp_def: 216,
+      speed: 335,
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type1: psychic,
+      type2: none,
+      moves: [movesList.psystrike, 
+        movesList.recover, 
+        movesList.ice_beam, 
+        movesList.calm_mind]
     }
   };
-  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres];
+  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres, pokemon.mewtwo];
   backgroundMap = random([loadImage("backgrounds/back_0.png"), loadImage("backgrounds/back_1.png"), loadImage("backgrounds/back_2.png"), loadImage("backgrounds/back_3.png"), loadImage("backgrounds/back_4.png"), loadImage("backgrounds/back_5.png"), loadImage("backgrounds/back_6.png"), loadImage("backgrounds/back_7.png"), loadImage("backgrounds/back_8.png"), loadImage("backgrounds/back_9.png")]);
 }
 function setup() {
@@ -901,19 +965,18 @@ function draw() {
 
 
 function damageCalculator(attacker, defender, move, isBattle){
-  let attackerModdedSpeed = attacker.speed;
-  let defenderModdedSpeed = defender.speed;
+  let attackerModdedSpeed = statFormula(attacker.speed, attacker.statModifiers.speed);
+  let defenderModdedSpeed = statFormula(defender.speed, defender.statModifiers.speed);
+  let moddedSp_Atk = statFormula(attacker.sp_atk, attacker.statModifiers.sp_atk);
+  let moddedSp_Def = statFormula(defender.sp_def, defender.statModifiers.sp_def);
+  let moddedAttack = statFormula(attacker.attack, attacker.statModifiers.attack);
+  let moddedDefense = statFormula(defender.defense, defender.statModifiers.defense);
+
   if (attacker.status === "Paralyzed"){
     attackerModdedSpeed *= 0.5;
   }
-  if (attacker.statModifiers.speed > 0){
-    attackerModdedSpeed += attacker.statModifiers.speed * (0.5*attackerModdedSpeed);
-  }
   if (defender.status === "Paralyzed"){
     defenderModdedSpeed *= 0.5;
-  }
-  if (defender.statModifiers.speed > 0){
-    defenderModdedSpeed += defender.statModifiers.speed * (0.5*defenderModdedSpeed);
   }
   let criticalHitChance = 1;
   let damage;
@@ -925,15 +988,9 @@ function damageCalculator(attacker, defender, move, isBattle){
   
   if (move.category === physical){
     damage = Math.floor(
-      Math.floor(42 * attacker.attack * move.power / defender.defense) / 50);
+      Math.floor(42 * moddedAttack * move.power / moddedDefense) / 50);
     if (attacker.status === "burned" && move.category === physical){
       damage *= 0.5;
-    }
-    if (attacker.statModifiers.attack >= 0){
-      damage *= 1 + attacker.statModifiers.attack * 0.5;
-    }
-    if (defender.statModifiers.defense <= -1){
-      damage *= 1 + defender.statModifiers.defense * -0.5;
     }
       
     // if (attacker.statModifiers.attack <=-1){
@@ -942,14 +999,11 @@ function damageCalculator(attacker, defender, move, isBattle){
   }
   else if (move.category === special){
     damage = Math.floor(
-      Math.floor(42 * attacker.sp_atk * move.power / defender.sp_def) / 50);
-      
-    if (attacker.statModifiers.sp_atk >= 0){
-      damage *= 1 + attacker.statModifiers.sp_atk * 0.5;
-    }
-    if (defender.statModifiers.sp_def <= -1){
-      damage *= 1 + defender.statModifiers.sp_def * -0.5;
-    }
+      Math.floor(42 * moddedSp_Atk * move.power / moddedSp_Def) / 50);
+  }
+  else if (move.category === shock){
+    damage = Math.floor(
+      Math.floor(42 * moddedSp_Atk * move.power / moddedDefense) / 50);
   }
     
   if (move.effect[0] === 9){
@@ -1026,7 +1080,7 @@ function damageCalculator(attacker, defender, move, isBattle){
         
         if (move.effect[0] === 4){
           //4 Increases Attack
-          attacker.statModifiers.attack + move.effect[2];
+          attacker.statModifiers.attack += move.effect[2];
           return "boost";
         }
         if (move.effect[0] === 5 && defender.status === 0 && (defender.type1 !== fire && defender.type2 !== fire)){
@@ -1095,6 +1149,11 @@ function damageCalculator(attacker, defender, move, isBattle){
           //Lowers the Special Attack stat
           defender.statModifiers.sp_atk -= move.effect[2];
         }   
+        if (move.effect[0] === 20){
+          attacker.statModifiers.sp_def ++;
+          attacker.statModifiers.sp_atk ++;
+          return "boost";
+        }
       }
     } 
     if (criticalHitChance>random(16)){
@@ -1113,12 +1172,12 @@ function damageCalculator(attacker, defender, move, isBattle){
   return Math.floor(damage);
 }
       
-function typeEffectivenessChecker(pokemon_type, move_type){
+function typeEffectivenessChecker(pokemon_type, moveType){
   if (pokemon_type === normal){
-    if (move_type === fighting){
+    if (moveType === fighting){
       return 2;
     }
-    else if (move_type === ghost){
+    else if (moveType === ghost){
       return 0;
     }
     return 1;
@@ -1126,33 +1185,33 @@ function typeEffectivenessChecker(pokemon_type, move_type){
 
   else if (pokemon_type === bug){
 
-    if (move_type === fire || move_type === rock || move_type === flying){
+    if (moveType === fire || moveType === rock || moveType === flying){
       return 2;
     }
-    else if (move_type === fighting || move_type === grass || move_type === ground){
+    else if (moveType === fighting || moveType === grass || moveType === ground){
       return 0.5;
     }
     return 1;
   }
 
   else if (pokemon_type === electric){
-    if (move_type === ground){
+    if (moveType === ground){
       return 2;
     }
-    else if (move_type === flying || move_type === steel || move_type === electric){
+    else if (moveType === flying || moveType === steel || moveType === electric){
       return 0.5;
     }
     return 1;
   }
 
   else if (pokemon_type === flying){
-    if (move_type === ice || move_type === rock || move_type === electric){
+    if (moveType === ice || moveType === rock || moveType === electric){
       return 2;
     }
-    else if (move_type === bug || move_type === grass || move_type === fighting){
+    else if (moveType === bug || moveType === grass || moveType === fighting){
       return 0.5;
     }
-    else if (move_type === ground){
+    else if (moveType === ground){
       return 0;
     }
     else{
@@ -1161,10 +1220,10 @@ function typeEffectivenessChecker(pokemon_type, move_type){
   }
   
   else if (pokemon_type === dragon){
-    if (move_type === fairy || move_type === dragon || move_type === ice){
+    if (moveType === fairy || moveType === dragon || moveType === ice){
       return 2;
     }
-    else if (move_type === grass || move_type === fire || move_type ===  water || move_type === electric){
+    else if (moveType === grass || moveType === fire || moveType ===  water || moveType === electric){
       return 0.5;
     }
     else{
@@ -1173,10 +1232,10 @@ function typeEffectivenessChecker(pokemon_type, move_type){
   }
 
   else if (pokemon_type === ice){
-    if (move_type === rock || move_type === steel || move_type === fire || move_type === fighting){
+    if (moveType === rock || moveType === steel || moveType === fire || moveType === fighting){
       return 2;
     }
-    else if (move_type === ice){
+    else if (moveType === ice){
       return 0.5;
     }
     else{
@@ -1185,139 +1244,139 @@ function typeEffectivenessChecker(pokemon_type, move_type){
   }
   
   else if (pokemon_type === fairy){
-    if (move_type === poison || move_type === steel){
+    if (moveType === poison || moveType === steel){
       return 2;
     }
-    else if (move_type === fighting || move_type === bug || move_type === dark){
+    else if (moveType === fighting || moveType === bug || moveType === dark){
       return 0.5;
     }
-    else if (move_type === dragon){
+    else if (moveType === dragon){
       return 0;
     }
     return 1;
   }
 
   else if (pokemon_type === water){
-    if (move_type === electric || move_type === grass){
+    if (moveType === electric || moveType === grass){
       return 2;
     }
-    else if (move_type === fire|| move_type === ice || move_type === water || move_type === steel){
+    else if (moveType === fire|| moveType === ice || moveType === water || moveType === steel){
       return 0.5;
     }
     return 1;
   }
 
   else if (pokemon_type === fire){
-    if (move_type === water || move_type === rock || move_type === ground){
+    if (moveType === water || moveType === rock || moveType === ground){
       return  2;
     }
-    else if (move_type === ice || move_type === steel || move_type === bug || move_type === grass || move_type === fire){
+    else if (moveType === ice || moveType === steel || moveType === bug || moveType === grass || moveType === fire){
       return 0.5;
     }
     return 1;
   }
 
   else if (pokemon_type === steel){
-    if (move_type === fighting || move_type === fire || move_type === ground){
+    if (moveType === fighting || moveType === fire || moveType === ground){
       return 2;
     }
-    else if (move_type === normal || move_type === rock || move_type === fairy || move_type === dragon || move_type === flying || move_type === bug || move_type === steel || move_type === psychic || move_type === grass || move_type === ice){
+    else if (moveType === normal || moveType === rock || moveType === fairy || moveType === dragon || moveType === flying || moveType === bug || moveType === steel || moveType === psychic || moveType === grass || moveType === ice){
       return 0.5;
     }
 
-    else if (move_type === poison){
+    else if (moveType === poison){
       return 0;
     }
     return 1;
   }
 
   else if (pokemon_type === psychic){
-    if (move_type === dark || move_type === ghost || move_type === bug){
+    if (moveType === dark || moveType === ghost || moveType === bug){
       return 2;
     }
-    else if (move_type === fighting || move_type === psychic){
+    else if (moveType === fighting || moveType === psychic){
       return 0.5;
     }
     return 1;
   }
 
   else if (pokemon_type === dark){
-    if (move_type === fairy || move_type === fighting || move_type === bug){
+    if (moveType === fairy || moveType === fighting || moveType === bug){
       return 2;
     }
-    else if (move_type === dark || move_type === ghost){
+    else if (moveType === dark || moveType === ghost){
       return 0.5;
     }
-    else if (move_type === psychic){
+    else if (moveType === psychic){
       return 0;
     }
     return 1;
   }
 
   else if (pokemon_type === fighting){
-    if (move_type === psychic || move_type === flying || move_type === fairy){
+    if (moveType === psychic || moveType === flying || moveType === fairy){
       return 2;
     }
-    if (move_type === bug || move_type === dark){
+    if (moveType === bug || moveType === dark || moveType === rock){
       return 0.5;
     }
     return 1;
   }
 
   else if (pokemon_type === ghost){
-    if (move_type === ghost || move_type === dark){
+    if (moveType === ghost || moveType === dark){
       return 2;
     }
-    else if (move_type === bug){
+    else if (moveType === bug){
       return 0.5;
     }
-    else if (move_type === normal || move_type === fighting){
+    else if (moveType === normal || moveType === fighting){
       return 0;
     }
     return 1;
   }
 
   else if (pokemon_type === poison){
-    if (move_type === ground || move_type === psychic){
+    if (moveType === ground || moveType === psychic){
       return 2;
     }
-    else if (move_type === grass || move_type === bug || move_type === fighting || move_type === fairy || move_type === poison){
+    else if (moveType === grass || moveType === bug || moveType === fighting || moveType === fairy || moveType === poison){
       return 0.5;
     }
     return 1;
   }
 
   else if (pokemon_type === grass){
-    if (move_type === fire || move_type === ice || move_type === bug || move_type === poison || move_type === flying){
+    if (moveType === fire || moveType === ice || moveType === bug || moveType === poison || moveType === flying){
       return 2;
     }
 
-    else if (move_type === ground || move_type === grass || move_type === electric){
+    else if (moveType === ground || moveType === grass || moveType === electric){
       return 0.5;
     }
     return 1;
   }
 
   else if (pokemon_type === ground){
-    if (move_type === water || move_type === grass || move_type === ice){
+    if (moveType === water || moveType === grass || moveType === ice){
       return 2;
     }
     
-    else if (move_type === rock || move_type === poison){
+    else if (moveType === rock || moveType === poison){
       return 0.5;
     }
 
-    else if (move_type === electric){
+    else if (moveType === electric){
       return 0;
     }
     return 1;
   }
 
   else if (pokemon_type === rock){
-    if (move_type === steel || move_type === ground || move_type === grass || move_type === water || move_type === fighting){
+    if (moveType === steel || moveType === ground || moveType === grass || moveType === water || moveType === fighting){
       return 2;
     }
-    else if (move_type === normal || move_type === flying || move_type === fire){
+    else if (moveType === normal || moveType === flying || moveType === fire){
       return 0.5;
     }
     return 1;
@@ -1327,10 +1386,13 @@ function typeEffectivenessChecker(pokemon_type, move_type){
   }
   data.push("Error: TYPE data unknown");
   data.push("The Defender type is "+ pokemon_type);
-  data.push("The Attack Type is " + move_type);
+  data.push("The Attack Type is " + moveType);
 
 }
 function effectDescriptions(effectData){
+  if (effectData[0] === -2){
+    return "A Special Attack that deals Physical damage \n(User's Sp. Atk, Target's Defense)";
+  }
   if (effectData[0] === -1){
     return "Attacks before most other moves,\nregardless of the User's Speed stat.";
   }
@@ -1395,6 +1457,9 @@ function effectDescriptions(effectData){
   if (effectData[0] === 19){
     return "Has a "+effectData[1]+"% chance to lower the target's Special Attack, \nlowering the damage done by their Special attacks.";
   }   
+  if (effectData[0] === 20){
+    return "Raises the user's Special Attack and Special Defense.";
+  }
 }
 function freezeDryCheck(defender){
   if (defender.type1 === water || defender.type2 === water){
@@ -1594,6 +1659,11 @@ function midTurnDataConfigure(attackResult, attacker, defender, move){
       turnDataLogs.push(attacker.name+ "'s Speed fell!");
       attacking = false;
     }
+    if (attackToUse.name === "Calm Mind"){
+      turnDataLogs.push(attacker.name+ "'s Special Attack increased!");
+      turnDataLogs.push(attacker.name+ "'s Special Defense increased!");
+      attacking = false;
+    }
     if (attackToUse.name === "Thunder Wave"){
       attacking === false;
     }
@@ -1683,6 +1753,18 @@ function midTurnDataConfigure(attackResult, attacker, defender, move){
   if (typeof isDead === "string"){
     turnDataLogs.push();
   }
+  attacker.statModifiers.speed = statModifierCheck(attacker.statModifiers.speed);
+  attacker.statModifiers.defense = statModifierCheck(attacker.statModifiers.defense);
+  attacker.statModifiers.attack = statModifierCheck(attacker.statModifiers.attack);
+  attacker.statModifiers.sp_atk = statModifierCheck(attacker.statModifiers.sp_atk);
+  attacker.statModifiers.sp_def = statModifierCheck(attacker.statModifiers.sp_def);
+  defender.statModifiers.speed = statModifierCheck(defender.statModifiers.speed);
+  defender.statModifiers.defense = statModifierCheck(defender.statModifiers.defense);
+  defender.statModifiers.attack = statModifierCheck(defender.statModifiers.attack);
+  defender.statModifiers.sp_atk = statModifierCheck(defender.statModifiers.sp_atk);
+  defender.statModifiers.sp_def = statModifierCheck(defender.statModifiers.sp_def);
+ 
+
   return turnDataLogs;
 }
 
@@ -1847,7 +1929,7 @@ function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
 
 
   //Checks if it would be in kill range next turn (if it were faced with another CPU), and prepares to heal in response to avoid this
-  if (cpu.hp < 2*damageCalculator(player, cpu, player.moves[findBestDamage(player, cpu)], false) && playerSpeed > cpuSpeed){
+  if (cpu.hp < 2*damageCalculator(player, cpu, player.moves[findBestDamage(player, cpu)], false) && playerSpeed > cpuSpeed && panicModeCounter < 10){
     if (healCheck[0] === true){
       panicModeCounter += 0.5;
       return cpu.moves[healCheck[1]];
@@ -1882,7 +1964,47 @@ function findBestOverallMove(attacker, defender){
   return bestOutcome;
 }
 
+function statFormula(stat, modifier){
+  let newStat = stat;
+  if (modifier !== 0){
+    if (modifier < 0){
+      if (modifier === -1){
+        newStat *= 2/3;
+      }
+      if (modifier === -2){
+        newStat *= 1/2;
+      }
+      if (modifier === -3){
+        newStat *= 2/5;
+      }
+      if (modifier === -4){
+        newStat *= 1/3;
+      }
+      if (modifier === -5){
+        newStat *= 2/7;
+      }
+      if (modifier === -6){
+        newStat *= 1/4;
+      }
+    }
+    else{ 
+      newStat *= 1 + modifier * 0.5;
+    }
+  }
+  return newStat;
+}
 
+function statModifierCheck(stat){
+  //Stats should never go past 6 stages, positive or negative, and this will reset it down, if it does.
+  let modifier = stat;
+  if (stat >6){
+    stat = 6;
+  }
+  if (stat <-6){
+    stat = -6;
+  }
+  return stat;
+}
 
 function keyTyped(){
   
@@ -1930,7 +2052,7 @@ function textReader(){
     if (data[readerProgress] !== null){
       while (typeof data[readerProgress] === "object" && data[readerProgress].length === 0 && loopBreaker <= 4){
         readerProgress++;
-        loopBreaker++
+        loopBreaker++;
         console.log("Bypassed Empty Move Data");
         if (readerProgress >= data.length){
           readerBusy = false;
@@ -1959,7 +2081,7 @@ function textReader(){
         console.log("Non-array data submitted");
       }
     }
-    console.log("Text Reader subfunction finished")
+    console.log("Text Reader subfunction finished");
   }
   if(readerProgress >= data.length){
     readerBusy = false;
@@ -2000,7 +2122,7 @@ function battleInterface(){
 }
 
 function switchOutCheck(){
-  if (activePlayer.status === "Fainted" || switchStarted === true && readerBusy === false){
+  if (activePlayer.status === "Fainted" && readerBusy === false){
     let switchOutResult = pokemonSwitch(playerParty, true, true);
     if (typeof switchOutResult !== "string" && switchOutResult !== null){
       console.log(switchOutResult);
