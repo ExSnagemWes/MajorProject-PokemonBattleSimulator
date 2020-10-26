@@ -1,7 +1,58 @@
+October 15th
+I need to clone a list. Maps should work
+
 So I need to redirect the pokemon selector to the appropriate list
 I have it set to choose whichever list# is defined by function variable LIST in constructor
 I need to make these new lists redirect to the backup pokemon data instead of the primary data
 
 I seem to be unable to do this.
 
-so that failed. second idea: just make it so no duplicates can appear. this means i need to program in another 6 pokemon before progressing further.
+so that failed. still refers to the original chart.
+second idea: just make it so no duplicates can appear. this means i need to program in another 6 pokemon before progressing further. also it'll be a tad more fun. yes that definetly the point. 100%.
+
+I need to figure out how to remove blank arrays
+function blank_array_clear(list){
+  let new_list = list;
+  for(let i = new_list.length-1; i>=0; i --){
+    if (new_list[i] === []){
+      new_list.splice(i, 1);
+    }
+  }
+  return new_list;
+}
+time matters not anymore
+
+
+I need to make the array-clearer function FUNCTION ~_~
+Make stat changes read somehow
+
+WWWRRRRYYYYY
+still haven't done stats and now the stupid AI is making mistakes even the Schell-man thinks is weird
+
+
+add a reader delay 
+
+imma fix the reader later... AI bug still needs to be improved a little
+
+working on the only one of each Pokemon selector function for: class Party.initialize();
+
+initializefinshed math round dumb
+
+just made the program utterly skip blank arrays
+
+and now it skips the second attack for some reason.
+Fire = 0.075
+Electric = 0.05
+Poison = 0.12
+
+
+
+AHAHAHAHA IT'S WORKING IT'S WORKING IT'S WORKING
+Charizard/Venusaur/Blastoise
+Articuno/Zapdos/Moltres
+Dragonite/Garchomp
+Tyranitar/Aggron
+Gengar/Heracross
+Mewtwo
+Gardevoir/Gallade
+Eevee/Jolteon/Fla

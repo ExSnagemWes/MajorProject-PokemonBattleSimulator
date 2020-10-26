@@ -60,6 +60,7 @@ let playerY;
 let cpuX;
 let cpuY;
 let spriteScale;
+let gameEnded = false;
 
 let movesList = {
   //Defines all attacks and effects, which will be broken down and read in Damage Checker
@@ -893,7 +894,9 @@ function draw() {
   //background(130, 255, 100);
   image(backgroundMap, width/2, height/2, width, height);
   battleInterface();
-  switchOutCheck();
+  if (gameEnded === false){
+    switchOutCheck();
+  }
 }
 
 
@@ -1090,7 +1093,7 @@ function damageCalculator(attacker, defender, move, isBattle){
         } 
         if (move.effect[0] === 19){
           //Lowers the Special Attack stat
-          defender.statModifiers.sp_akt -= move.effect[2];
+          defender.statModifiers.sp_atk -= move.effect[2];
         }   
       }
     } 
@@ -1362,7 +1365,7 @@ function effectDescriptions(effectData){
   if (effectData[9] === 9){
     return "Deals double the damage against a target with a status condition.";
   }
-  if (effectData[10] ===10){
+  if (effectData[0] ===10){
     return "Is Super Effective against Water Type Pokemon,\ndespite being Ice-Type.";
   }
   if (effectData[0] === 11){
@@ -1693,7 +1696,7 @@ function postTurnDataConfigure(pokemon, pokemon_2){
   pokemon.boundTimer --;
   if (pokemon.status === "Poisoned"){
     pokemon.hp -= Math.floor(pokemon.baseHP/8);
-    postTurnResults.push(pokemon.name+" is poisoned!");
+    postTurnResults.push(pokemon.name+" is poisoned!"+Math.floor(pokemon.baseHP/8));
     let isDead = faintChecker(pokemon);
     if (typeof isDead === "string"){
       postTurnResults.push(isDead);
@@ -1701,7 +1704,7 @@ function postTurnDataConfigure(pokemon, pokemon_2){
   }
   if (pokemon.status === "Burned"){
     pokemon.hp -= Math.floor(pokemon.baseHP/16);
-    postTurnResults.push(pokemon.name+" is burned!");
+    postTurnResults.push(pokemon.name+" is burned! -"+Math.floor(pokemon.baseHP/16));
     let isDead = faintChecker(pokemon);
     if (typeof isDead === "string"){
       postTurnResults.push(isDead);
@@ -1709,7 +1712,7 @@ function postTurnDataConfigure(pokemon, pokemon_2){
   }
   if (pokemon.status === "Badly Poisoned"){
     pokemon.hp -= Math.floor(pokemon.baseHP/16*-pokemon.statusTimer);
-    postTurnResults.push(pokemon.name+" is badly poisoned!");
+    postTurnResults.push(pokemon.name+" is badly poisoned! -"+Math.floor(pokemon.baseHP/16*-pokemon.statusTimer));
     let isDead = faintChecker(pokemon);
     if (typeof isDead === "string"){
       postTurnResults.push(isDead);
@@ -1718,7 +1721,7 @@ function postTurnDataConfigure(pokemon, pokemon_2){
   if (pokemon.bound === true){
     if (pokemon.boundTimer > 0){
       pokemon.hp -= Math.floor(pokemon.baseHP/8);
-      postTurnResults.push(pokemon.name+" was hurt by"+pokemon.boundBy+"!");
+      postTurnResults.push(pokemon.name+" was hurt by"+pokemon.boundBy+"! -"+Math.floor(pokemon.baseHP/8));
       let isDead = faintChecker(pokemon);
       if (typeof isDead === "string"){
         postTurnResults.push(isDead);
@@ -1733,7 +1736,7 @@ function postTurnDataConfigure(pokemon, pokemon_2){
   if (pokemon.leechSeed === true){
     pokemon.hp -= Math.floor(pokemon.baseHP/8);
     pokemon_2.hp += Math.floor(pokemon.baseHP/8);
-    postTurnResults.push(pokemon.name+"'s health was sapped by Leech Seed!");
+    postTurnResults.push(pokemon.name+"'s health was sapped by Leech Seed! "+pokemon.name+" -"+Math.floor(pokemon.baseHP/8)+", "+pokemon_2.name+" +"+Math.floor(pokemon.baseHP/8));
     let isDead = faintChecker(pokemon);
     if (typeof isDead === "string"){
       postTurnResults.push(isDead);
@@ -1908,10 +1911,13 @@ function keyTyped(){
 }
 
 function textReader(){
+  let loopBreaker = 0;
+  console.log("Text Reader Protocol initiated.");
   if (resetReader === true && readerBusy === false){
     data = turnInProgress(activePlayer, activeCPU, activePlayer.moves[moveSelected], aiMoveSelect(activeCPU, activePlayer, activeCPU.speed, activePlayer.speed));
     readerBusy = true;
     resetReader = false;
+    readerProgress = 0;
     //Sets the text reader to the beginning of the data pile
   }
   //Prevent a prior underflow error
@@ -1919,42 +1925,57 @@ function textReader(){
     readerProgress = 0;
   }
   if (readerBusy === true && readerProgress<data.length){
+    console.log("Text Sorter subfunction started");
     //Ignore non-useful data
-    if (data[readerProgress !== null]){
-      while (typeof data[readerProgress] === "object" && data[readerProgress].length === 0){
+    if (data[readerProgress] !== null){
+      while (typeof data[readerProgress] === "object" && data[readerProgress].length === 0 && loopBreaker <= 4){
         readerProgress++;
+        loopBreaker++
+        console.log("Bypassed Empty Move Data");
         if (readerProgress >= data.length){
           readerBusy = false;
           resetReader = true;
+          readerProgress = 0;
+          console.log("Reset Data: readerProgress surpassed data.length, prior to submission to reading");
         }
+      }
+      if (loopBreaker >4){
+        console.log("Loop Break sequence");
       }
     }
     if (readerProgress<data.length){
-      
-      if (typeof data[readerProgress] === "object" && data[readerProgress !== null]){
+    //Checks if the array is not empty
+      if (typeof data[readerProgress] === "object" && data[readerProgress] !== null){
+        console.log("Array Decompiling started");   
         textInterface = data[readerProgress][0];
         data[readerProgress].shift();
+        console.log("Array Decompiling finished, Array derivitive data sumbitted");
         //reads the data then removes it from the list until the list is empty, then procedes to move onto the next list
       }
+      //Instead it checks if is a string fragment instead, putting in the reader if it is
       else if (typeof data[readerProgress] === "string"){
         textInterface = data[readerProgress];
         readerProgress ++;
+        console.log("Non-array data submitted");
       }
     }
+    console.log("Text Reader subfunction finished")
   }
   if(readerProgress >= data.length){
     readerBusy = false;
     resetReader = true;
     readerProgress = 0;
-    
+    console.log("Reset Data: readerProgress surpassed data.length, after submission to reading");
   }
+  console.log("Text Reader Protocol completed.");
 }
 
 function battleInterface(){
   imageMode(CENTER);
-  image(activeCPU.sprites[0], cpuX, cpuY, spriteScale*2.5, spriteScale*2.5);
-  image(activePlayer.sprites[1], playerX, playerY, spriteScale*4, spriteScale*4);
   
+  if (activePlayer.status !== "Fainted"){
+    image(activePlayer.sprites[1], playerX, playerY, spriteScale*4, spriteScale*4);
+  }
   fill(255, 255, 255, 200);
   rect(0, height-50, width, 50);
   fill(0);
@@ -1962,35 +1983,45 @@ function battleInterface(){
   textSize(width/33);
   //Checks if the data is a move it needs to animate
   if (typeof textInterface === "object"){
-    text(textInterface[0]+textInterface[1]+textInterface[2], 0, height-25);
+    text(textInterface[0]+textInterface[1]+textInterface[2], 0, height-15);
     console.log(textInterface[1]);
     //moveAnimator(textInterface[1])
   }
   else{
-    text(textInterface, 0, height-25);
+    text(textInterface, 0, height-15);
   }
-  playerParty.summary(0,20, activePlayer.status === "Fainted", false);
-
+  playerParty.summary(0,20, activePlayer.status === "Fainted" && readerBusy === false, false);
+  
   cpuParty.summary(width-200,20, false, true);
-
+  
+  if (activeCPU.status !== "Fainted"){
+    image(activeCPU.sprites[0], cpuX, cpuY, spriteScale*2.5, spriteScale*2.5);
+  }
 }
 
 function switchOutCheck(){
-  if (activePlayer.status === "Fainted" && readerBusy === false && readerProgress){
+  if (activePlayer.status === "Fainted" || switchStarted === true && readerBusy === false){
     let switchOutResult = pokemonSwitch(playerParty, true, true);
     if (typeof switchOutResult !== "string" && switchOutResult !== null){
       console.log(switchOutResult);
       activePlayer = switchOutResult;
-      data.push("Go! "+ activePlayer.name + "!");
+      textInterface = "Go! "+ activePlayer.name + "!";
+      switchStarted = false;
     }
   }
   if (activeCPU.status === "Fainted"){
-    activeCPU = pokemonSwitch(cpuParty, false, true);
-    if (activeCPU === null){
-      textInterface = opponentName+" was defeated!";
-      return;
+    if (readerBusy === false){
+      if (pokemonSwitch(cpuParty, false, true) !== null){
+        activeCPU = pokemonSwitch(cpuParty, false, true);
+        textInterface = "Take him out, "+activeCPU.name+"!";
+      }
+      else{
+        textInterface = opponentName+" was defeated!";
+        gameEnded = true;
+        return;
+      }
+      
     }
-    data.push("Take him out, "+activeCPU.name+"!");
   }
   key = "";
   
@@ -2077,12 +2108,12 @@ class Party {
       //image(temporaryPartyList[i].sprites[1], x-80, offset, 80, 80)
       textStyle(BOLD);
       text(temporaryPartyList[i].name+ "       Lvl. 100", x, offset-10);
-      text("HP: "+temporaryPartyList[i].hp+"/"+temporaryPartyList[i].baseHP, x+110, offset+5);
-      text("Attack: "+temporaryPartyList[i].attack, x+110, offset+15);
-      text("Defense: "+temporaryPartyList[i].defense, x+110, offset+25);
-      text("Sp. Atk: "+temporaryPartyList[i].sp_atk, x+110, offset+35);
-      text("Sp. Def: "+temporaryPartyList[i].sp_def, x+110, offset+45);
-      text("Speed: "+temporaryPartyList[i].speed, x+110, offset+55);
+      text("HP:  "+temporaryPartyList[i].hp+"/"+temporaryPartyList[i].baseHP, x+110, offset+5);
+      text(temporaryPartyList[i].statModifiers.attack+" Attack:  "+temporaryPartyList[i].attack, x+90, offset+15);
+      text(temporaryPartyList[i].statModifiers.defense+" Defense: "+temporaryPartyList[i].defense, x+90, offset+25);
+      text(temporaryPartyList[i].statModifiers.sp_atk+" Sp. Atk: "+temporaryPartyList[i].sp_atk, x+90, offset+35);
+      text(temporaryPartyList[i].statModifiers.sp_def+" Sp. Def: "+temporaryPartyList[i].sp_def, x+90, offset+45);
+      text(temporaryPartyList[i].statModifiers.speed+" Speed:   "+temporaryPartyList[i].speed, x+90, offset+55);
       textStyle(ITALIC);
       text(temporaryPartyList[i].type1, x,offset+10);
       text(temporaryPartyList[i].type2, x+temporaryPartyList[i].type1.length*8,offset+10);
@@ -2090,19 +2121,21 @@ class Party {
       if (temporaryPartyList[i].status !== 0){
         text(temporaryPartyList[i].status, x, offset);
       }
-      text(temporaryPartyList[i].moves[0].name, x, offset+25);
-      //text(temporaryPartyList[i].moves[0].pp, x+temporaryPartyList[i].moves[0].name.length*8, offset+25);
-      text(temporaryPartyList[i].moves[1].name, x, offset+35);
-      //text(temporaryPartyList[i].moves[1].pp, x+temporaryPartyList[i].moves[1].name.length*8, offset+35);
-      text(temporaryPartyList[i].moves[2].name, x, offset+45);
-      //text(temporaryPartyList[i].moves[2].pp, x+temporaryPartyList[i].moves[2].name.length*8, offset+45);
-      text(temporaryPartyList[i].moves[3].name, x, offset+55);
+      if (temporaryPartyList[i].status !== "Fainted"){
+        text(temporaryPartyList[i].moves[0].name, x, offset+25);
+        //text(temporaryPartyList[i].moves[0].pp, x+temporaryPartyList[i].moves[0].name.length*8, offset+25);
+        text(temporaryPartyList[i].moves[1].name, x, offset+35);
+        //text(temporaryPartyList[i].moves[1].pp, x+temporaryPartyList[i].moves[1].name.length*8, offset+35);
+        text(temporaryPartyList[i].moves[2].name, x, offset+45);
+        //text(temporaryPartyList[i].moves[2].pp, x+temporaryPartyList[i].moves[2].name.length*8, offset+45);
+        text(temporaryPartyList[i].moves[3].name, x, offset+55);
       //text(temporaryPartyList[i].moves[3].pp, x+temporaryPartyList[i].moves[3].name.length*8, offset+55);
-      if (all === false && cpu === false){
+      }
+      if (all === false && cpu === false && temporaryPartyList[i].status !== "Fainted"){
         textStyle(BOLD);
-        text("|"+temporaryPartyList[i].moves[moveSelected].name+"|", x+temporaryPartyList[i].moves[moveSelected].name.length*4, offset+70);
+        text("|"+temporaryPartyList[i].moves[moveSelected].name+"|", 0, offset+70);
         textStyle(ITALIC);
-        text(temporaryPartyList[i].moves[moveSelected].type, temporaryPartyList[i].moves[moveSelected].name.length *13, offset+70);
+        text(temporaryPartyList[i].moves[moveSelected].type, temporaryPartyList[i].moves[moveSelected].name.length *10, offset+70);
         text("Power: " +temporaryPartyList[i].moves[moveSelected].power+ " Accuracy: "+temporaryPartyList[i].moves[moveSelected].accuracy+" Category: "+temporaryPartyList[i].moves[moveSelected].category, x, offset+80);
         text("Move Effect: " +effectDescriptions(temporaryPartyList[i].moves[moveSelected].effect), x, offset+90);
       }
