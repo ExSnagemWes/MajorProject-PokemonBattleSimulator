@@ -15,7 +15,7 @@ let activePlayer;
 let activeCPU;
 let backgroundMap;
 let trainerClasses = ["Hiker", "Youngster", "Beauty", "Trainer", "Bugcatcher", "Pokemaniac", "Triathlete", "Ninja", "Wanderer", "Gentleman", "Biker", "Hex Maniac"];
-let names = ["Todd", "Valerie", "Dave", "Kianna", "Mathew", "Vince", "Carl", "Billie", "Joanna", "Keanu", "Ike", "Natalia", "Taylor", "Emma", "Winston", "Wade", "James", "Kari", "Mark", "Bean", "Emilia", "Kenneth", "Nigel", "Cassandra", "Rias", "Lance", "Agatha", "Bruno", "Lorelei", "Wallace", "Brock", "Misty", "Lt. Surge", "Blaine", "Giovanni", "Jessie", "Erika", "Sabrina", "Koga"];
+let names = ["Todd", "Valerie", "Saidy", "Yash", "Sam", "Dave", "Kianna", "Mathew", "Vince", "Carl", "Billie", "Joanna", "Keanu", "Ike", "Natalia", "Taylor", "Emma", "Winston", "Wade", "James", "Kari", "Mark", "Bean", "Emilia", "Kenneth", "Nigel", "Cassandra", "Rias", "Lance", "Agatha", "Bruno", "Lorelei", "Wallace", "Brock", "Misty", "Lt. Surge", "Blaine", "Giovanni", "Jessie", "Erika", "Sabrina", "Koga"];
 let opponentName;
 let physical = "Physical";
 let special = "Special";
