@@ -14,8 +14,8 @@ let cpuParty;
 let activePlayer;
 let activeCPU;
 let backgroundMap;
-let trainerClasses = ["Hiker", "Youngster", "Beauty", "Trainer", "Bugcatcher", "Pokemaniac", "Triathlete", "Ninja", "Wanderer", "Gentleman"];
-let names = ["Todd", "Valerie", "Dave", "Kianna", "Mathew", "Vince", "Carl", "Billie", "Joanna", "Keanu", "Ike", "Natalia", "Taylor", "Emma", "Winston", "Wade", "James", "Kari", "Mark", "Bean", "Emilia", "Kenneth", "Nigel", "Cassandra", "Rias"];
+let trainerClasses = ["Hiker", "Youngster", "Beauty", "Trainer", "Bugcatcher", "Pokemaniac", "Triathlete", "Ninja", "Wanderer", "Gentleman", "Biker", "Hex Maniac"];
+let names = ["Todd", "Valerie", "Dave", "Kianna", "Mathew", "Vince", "Carl", "Billie", "Joanna", "Keanu", "Ike", "Natalia", "Taylor", "Emma", "Winston", "Wade", "James", "Kari", "Mark", "Bean", "Emilia", "Kenneth", "Nigel", "Cassandra", "Rias", "Lance", "Agatha", "Bruno", "Lorelei", "Wallace", "Brock", "Misty", "Lt. Surge", "Blaine", "Giovanni", "Jessie", "Erika", "Sabrina", "Koga"];
 let opponentName;
 let physical = "Physical";
 let special = "Special";
@@ -27,11 +27,11 @@ let newStatus = false;
 let newConfused = 0;
 let gameMode = "HP";
 let panicModeCounter = 0;
-let readerBusy = false;
+let readerBusy = true;
 let readerProgress = -1;
-let resetReader = true;
+let resetReader = false;
 let switchStarted = false;
-let textInterface = "Press 'Spacebar' to begin, and '-' and '=/+' to navigate your attack choice";
+let textInterface = "Press 'Spacebar' to begin, and '-' and '=/+' to navigate your attack choice. ";
 let moveSelected = 0;
 
 //Convenience. Pressing shift constantly really slows me down
@@ -305,7 +305,7 @@ let movesList = {
     effect: [2, 100]},
 
   recover: {
-    name: "recover",
+    name: "Recover",
     type: normal,
     power: 0,
     accuracy: 0,
@@ -939,7 +939,7 @@ function setup() {
   else{
     spriteScale = width/6;
   }
-  opponentName = random(trainerClasses) + random(names);
+  opponentName = random(trainerClasses) +" "+random(names);
   playerParty = new Party();
   playerParty.initalize();
   cpuParty = new Party();
@@ -951,6 +951,7 @@ function setup() {
   cpuY = height/1.7 - spriteScale;
   playerX = width/2.2 - spriteScale*1.5;
   playerY = height/2 + spriteScale*1.3;
+  data = [opponentName + " wants to battle! " + opponentName + " sent out "+activeCPU.name+"!"];
   noSmooth();
 }
 
@@ -2133,8 +2134,8 @@ function switchOutCheck(){
   }
   if (activeCPU.status === "Fainted"){
     if (readerBusy === false){
-      if (pokemonSwitch(cpuParty, false, true) !== null){
-        activeCPU = pokemonSwitch(cpuParty, false, true);
+      activeCPU = pokemonSwitch(cpuParty, false, true);
+      if (activeCPU !== undefined){
         textInterface = "Take him out, "+activeCPU.name+"!";
       }
       else{
