@@ -1491,15 +1491,15 @@ function preload(){
       sp_atk: 144,
       sp_def: 364,
       speed: 40,
-      stat_changes: {
+      statModifiers: {
         attack: 0,
         defense: 0,
         sp_atk: 0,
         sp_def: 0,
         speed: 0
       },
-      type_1: grass,
-      type_2: steel,
+      type1: grass,
+      type2: steel,
       moves: [movesList.power_whip, 
         movesList.gyro_ball, 
         movesList.leech_seed, 
@@ -1527,15 +1527,15 @@ function preload(){
       sp_atk: 349,
       sp_def: 216,
       speed: 324,
-      stat_changes: {
+      statModifiers: {
         attack: 0,
         defense: 0,
         sp_atk: 0,
         sp_def: 0,
         speed: 0
       },
-      type_1: dark,
-      type_2: dragon,
+      type1: dark,
+      type2: dragon,
       moves: [movesList.draco_meteor, 
         movesList.dark_pulse, 
         movesList.flash_cannon, 
