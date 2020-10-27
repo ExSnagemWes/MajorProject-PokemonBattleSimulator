@@ -152,6 +152,16 @@ let movesList = {
     priority: 0,
     effect: [3, 30]},
 
+  dark_pulse: {
+    name: "Dark Pulse",
+    type: dark,
+    power: 80,
+    accuracy: 100,
+    pp: 15,
+    category: special,
+    priority: 0,
+    effect: [3, 20]},
+
   body_slam: {
     name: "Body Slam",
     type: normal,
@@ -332,6 +342,16 @@ let movesList = {
     priority: 0,
     effect: [6,20, 1]},
 
+  flash_cannon: {
+    name: "Flash Cannon",
+    type: steel,
+    power: 90,
+    accuracy: 100,
+    pp: 10,
+    category: special,
+    priority: 0,
+    effect: [6,20, 1]},
+
   bug_buzz: {
     name: "Bug Buzz",
     type: bug,
@@ -482,6 +502,26 @@ let movesList = {
     priority: 0,
     effect: [13,100]},
 
+  gyro_ball: {
+    name: "Gyro Ball",
+    type: steel,
+    power: 75,
+    accuracy: 100,
+    pp: 10,
+    category: physical,
+    priority: 0,
+    effect: [13,100]},
+
+  payback: {
+    name: "Payback",
+    type: dark,
+    power: 60,
+    accuracy: 100,
+    pp: 10,
+    category: physical,
+    priority: 0,
+    effect: [13,100]},
+
   heavy_slam: {
     name: "Heavy Slam",
     type: steel,
@@ -510,12 +550,21 @@ let movesList = {
     pp: 15,
     category: status,
     priority: 0,
-    effect: [15, 100]
-  },
+    effect: [15, 100]},
 
   megahorn: {
     name: "Megahorn",
     type: bug,
+    power: 120,
+    accuracy: 85,
+    pp: 10,
+    category: physical,
+    priority: 0,
+    effect: [0,0]},
+
+  power_whip: {
+    name: "Power Whip",
+    type: grass,
     power: 120,
     accuracy: 85,
     pp: 10,
@@ -530,6 +579,16 @@ let movesList = {
     accuracy: 100,
     pp: 5,
     category: physical,
+    priority: 0,
+    effect: [16,100]},
+
+  draco_meteor: {
+    name: "Draco Meteor",
+    type: dragon,
+    power: 120,
+    accuracy: 100,
+    pp: 5,
+    category: special,
     priority: 0,
     effect: [16,100]},
 
@@ -616,6 +675,26 @@ let movesList = {
   play_rough:{
     name: "Play Rough",
     type: fairy,
+    power: 90,
+    accuracy: 100,
+    pp: 15,
+    category: physical,
+    priority: 0,
+    effect: [11,100]},
+
+  leaf_blade:{
+    name: "Leaf Blade",
+    type: grass,
+    power: 90,
+    accuracy: 100,
+    pp: 15,
+    category: physical,
+    priority: 0,
+    effect: [11,100]},
+
+  x_scissor:{
+    name: "X-Scissor",
+    type: bug,
     power: 90,
     accuracy: 100,
     pp: 15,
@@ -881,7 +960,7 @@ function preload(){
       type1: rock,
       type2: dark,
       moves: [movesList.stone_edge, 
-        movesList.crunch, 
+        movesList.payback, 
         movesList.avalanche, 
         movesList.earthquake]
     },
@@ -1355,7 +1434,6 @@ function preload(){
         movesList.close_combat]
     },
 
-    
     golisopod: {
       name: "Golisopod",
       sprites: [loadImage("sprites/golisopod_front.png"), loadImage("sprites/golisopod_back.png")],
@@ -1390,11 +1468,83 @@ function preload(){
         movesList.skitter_smack, 
         movesList.razor_shell, 
         movesList.swords_dance]
+    },
+
+    ferrothorn: {
+      name: "Ferrothorn",
+      sprites: [loadImage("sprites/ferrothorn_front.png"), loadImage("sprites/ferrothorn_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 289,
+      hp: 289,
+      attack: 224,
+      defense: 361,
+      sp_atk: 144,
+      sp_def: 364,
+      speed: 40,
+      stat_changes: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type_1: grass,
+      type_2: steel,
+      moves: [movesList.power_whip, 
+        movesList.gyro_ball, 
+        movesList.leech_seed, 
+        movesList.curse]
+    },
+
+    hydreigon: {
+      name: "Hydreigon",
+      //sprites: [loadImage("sprites/hydreigon_front.png"), loadImage("sprites/hydreigon_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 325,
+      hp: 325,
+      attack: 193,
+      defense: 216,
+      sp_atk: 349,
+      sp_def: 216,
+      speed: 324,
+      stat_changes: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type_1: dark,
+      type_2: dragon,
+      moves: [movesList.draco_meteor, 
+        movesList.dark_pulse, 
+        movesList.flash_cannon, 
+        movesList.roost]
     }
 
   };
   //Allows searching through defined Pokemon
-  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres, pokemon.mewtwo, pokemon.snorlax, pokemon.blissey, pokemon.shuckle, pokemon.gardevoir, pokemon.snom, pokemon.jolteon, pokemon.absol, pokemon.golisopod];
+  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres, pokemon.mewtwo, pokemon.snorlax, pokemon.blissey, pokemon.shuckle, pokemon.gardevoir, pokemon.snom, pokemon.jolteon, pokemon.absol, pokemon.golisopod, pokemon.ferrothorn];
   
   //Selects a random Background
   backgroundMap = random([loadImage("backgrounds/back_0.png"), loadImage("backgrounds/back_1.png"), loadImage("backgrounds/back_2.png"), loadImage("backgrounds/back_3.png"), loadImage("backgrounds/back_4.png"), loadImage("backgrounds/back_5.png"), loadImage("backgrounds/back_6.png"), loadImage("backgrounds/back_7.png"), loadImage("backgrounds/back_8.png"), loadImage("backgrounds/back_9.png")]);
@@ -2750,7 +2900,7 @@ function moveReader(moveName){
 }
 function moveAnimator(moveName){
   let moveData = moveReader(moveName);
-  console.log(moveData[0][1])
+  console.log(moveData[0][1]);
   image(moveMap.get(moveData[1][1]),(playerX+cpuX)/2, (playerY+cpuY)/2, moveData[2][1], moveData[2][1]);
 }
 
