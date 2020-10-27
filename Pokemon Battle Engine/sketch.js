@@ -624,6 +624,8 @@ let movesList = {
     effect: [11,100]}
 
 };
+let movesArray = Object.entries(movesList);
+let moveMap = new Map();
 
 
 //let damage = 0;
@@ -1397,6 +1399,25 @@ function preload(){
   //Selects a random Background
   backgroundMap = random([loadImage("backgrounds/back_0.png"), loadImage("backgrounds/back_1.png"), loadImage("backgrounds/back_2.png"), loadImage("backgrounds/back_3.png"), loadImage("backgrounds/back_4.png"), loadImage("backgrounds/back_5.png"), loadImage("backgrounds/back_6.png"), loadImage("backgrounds/back_7.png"), loadImage("backgrounds/back_8.png"), loadImage("backgrounds/back_9.png")]);
   music = createAudio("assets/music.mp3");
+  moveMap.set(normal, loadImage("move_animations/Normal.png"));
+  moveMap.set(bug, loadImage("move_animations/Bug.png"));
+  moveMap.set(grass, loadImage("move_animations/Grass.png"));
+  moveMap.set(water, loadImage("move_animations/Water.png"));
+  moveMap.set(fire, loadImage("move_animations/Fire.gif"));
+  moveMap.set(ice, loadImage("move_animations/Ice.gif"));
+  moveMap.set(dragon, loadImage("move_animations/Dragon.png"));
+  moveMap.set(steel, loadImage("move_animations/Steel.png"));
+  moveMap.set(fairy, loadImage("move_animations/Fairy.png"));
+  moveMap.set(fighting, loadImage("move_animations/Fighting.png"));
+  moveMap.set(dark, loadImage("move_animations/Dark.png"));
+  moveMap.set(ghost, loadImage("move_animations/Ghost.png"));
+  moveMap.set(psychic, loadImage("move_animations/Psychic.png"));
+  moveMap.set(poison, loadImage("move_animations/Poison.gif"));
+  moveMap.set(ground, loadImage("move_animations/Ground.png"));
+  moveMap.set(rock, loadImage("move_animations/Rock.png"));
+  moveMap.set(flying, loadImage("move_animations/Flying.png"));
+  moveMap.set(electric, loadImage("move_animations/Electric.gif"));
+  moveMap.set(none, loadImage("move_animations/---.png"));
 }
 
 function setup() {
@@ -2175,7 +2196,6 @@ function midTurnDataConfigure(attackResult, attacker, defender, move){
     }
 
     if (attackToUse.name === "Toxic"){
-      console.log("Toxic registered as selected attack.")
       attacking = false;
     }
   }
@@ -2646,7 +2666,7 @@ function battleInterface(){
   if (typeof textInterface === "object"){
     text(textInterface[0]+textInterface[1]+textInterface[2], 0, height-15);
     console.log(textInterface[1]);
-    //moveAnimator(textInterface[1])
+    console.log(moveAnimator(textInterface[1]));
   }
   else{
     text(textInterface, 0, height-15);
@@ -2661,6 +2681,7 @@ function battleInterface(){
 }
 
 function switchOutCheck(){
+  //Checks if the Pokemon should be switched out
   if (activePlayer.status === "Fainted" && readerBusy === false){
     let switchOutResult = pokemonSwitch(playerParty, true, true);
     if (typeof switchOutResult !== "string" && switchOutResult !== null){
@@ -2718,6 +2739,21 @@ function pokemonSwitch(party, isPlayer, fainted){
     return cpuParty.base_list[findBestOffensivePokemon(party, activePlayer)];
   }
 }
+
+function moveReader(moveName){
+  for (let i = 0; i < movesArray.length; i ++){
+    let moveData = Object.entries(movesArray[i][1]);
+    if (moveData[0][1]===moveName){
+      return moveData;
+    }
+  }
+}
+function moveAnimator(moveName){
+  let moveData = moveReader(moveName);
+  console.log(moveData[0][1])
+  image(moveMap.get(moveData[1][1]),(playerX+cpuX)/2, (playerY+cpuY)/2, moveData[2][1], moveData[2][1]);
+}
+
 class Party {
   constructor(){
     this.slot_1 = 0,
