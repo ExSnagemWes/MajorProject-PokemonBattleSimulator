@@ -21,14 +21,22 @@ let status = "Other";
 let newStatus = false;
 let newConfused = 0;
 let newBound = false;
+
+let moveSelected = 0;
+
+
 let gameMode = "HP";
 let panicModeCounter = 0;
+let statusUsed = false;
+
 let readerBusy = true;
 let readerProgress = -1;
 let resetReader = false;
 let switchStarted = false;
 let textInterface = "Press 'Spacebar' to begin, and '-' and '=/+' to navigate your attack choice. ";
-let moveSelected = 0;
+
+let critical = false;
+let gameEnded = false;
 
 //Convenience. Pressing shift constantly really slows me down
 //defines Pokemon Types
@@ -51,8 +59,6 @@ let rock = "Rock";
 let flying = "Flying";
 let electric = "Electric";
 let none = "---";
-let critical = false;
-let gameEnded = false;
 
 let movesList = {
   //Defines all attacks and effects, which will be broken down and read in Damage Checker
@@ -176,6 +182,16 @@ let movesList = {
     priority: 0,
     effect: [19, 100, 1]},
 
+  skitter_smack: {
+    name: "Skitter Smack",
+    type: bug,
+    power: 75,
+    accuracy: 100,
+    pp: 10,
+    category: physical,
+    priority: 0,
+    effect: [19, 100, 1]},
+
   moonblast: {
     name: "Moonblast",
     type: fairy,
@@ -202,7 +218,7 @@ let movesList = {
     power: 0,
     accuracy: 100,
     pp: 30,
-    category: boost,
+    category: status,
     priority: 0,
     effect: [18,100]},
 
@@ -446,6 +462,16 @@ let movesList = {
     priority: 0,
     effect: [12,20,1]},
 
+  razor_shell: {
+    name: "Razor Shell",
+    type: water,
+    power: 75,
+    accuracy: 95,
+    pp: 15,
+    category: physical,
+    priority: 0,
+    effect: [12,50,1]},
+  
   avalanche: {
     name: "Avalanche",
     type: ice,
@@ -533,7 +559,7 @@ let movesList = {
     power: 0,
     accuracy: 100, 
     pp: 10, 
-    category: boost,
+    category: status,
     priority: 0,
     effect: [21, 100]},
 
@@ -543,7 +569,7 @@ let movesList = {
     power: 0,
     accuracy: 90, 
     pp: 10, 
-    category: boost,
+    category: status,
     priority: 0,
     effect: [22, 100]},
 
@@ -577,6 +603,16 @@ let movesList = {
     priority: 2,
     effect: [-1,0]},
 
+  aqua_jet: {
+    name: "Aqua Jet",
+    type: water,
+    power: 60,
+    accuracy: 100,
+    pp: 5,
+    category: physical,
+    priority: 2,
+    effect: [-1,0]},
+  
   play_rough:{
     name: "Play Rough",
     type: fairy,
@@ -594,6 +630,7 @@ let movesList = {
 let pokemon;
 let pokemonList;
 function preload(){
+  //Generates all Pokemon data, including sprites
   pokemon = {
     dragonite: {
       name: "Dragonite",
@@ -1314,13 +1351,54 @@ function preload(){
         movesList.swords_dance, 
         movesList.play_rough, 
         movesList.close_combat]
+    },
+
+    
+    golisopod: {
+      name: "Golisopod",
+      sprites: [loadImage("sprites/golisopod_front.png"), loadImage("sprites/golisopod_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 354,
+      hp: 354,
+      attack: 383,
+      defense: 316,
+      sp_atk: 140,
+      sp_def: 216,
+      speed: 117,
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type1: bug,
+      type2: water,
+      moves: [movesList.aqua_jet, 
+        movesList.skitter_smack, 
+        movesList.razor_shell, 
+        movesList.swords_dance]
     }
 
   };
-  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres, pokemon.mewtwo, pokemon.snorlax, pokemon.blissey, pokemon.shuckle, pokemon.gardevoir, pokemon.snom, pokemon.jolteon, pokemon.absol];
+  //Allows searching through defined Pokemon
+  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres, pokemon.mewtwo, pokemon.snorlax, pokemon.blissey, pokemon.shuckle, pokemon.gardevoir, pokemon.snom, pokemon.jolteon, pokemon.absol, pokemon.golisopod];
+  
+  //Selects a random Background
   backgroundMap = random([loadImage("backgrounds/back_0.png"), loadImage("backgrounds/back_1.png"), loadImage("backgrounds/back_2.png"), loadImage("backgrounds/back_3.png"), loadImage("backgrounds/back_4.png"), loadImage("backgrounds/back_5.png"), loadImage("backgrounds/back_6.png"), loadImage("backgrounds/back_7.png"), loadImage("backgrounds/back_8.png"), loadImage("backgrounds/back_9.png")]);
   music = createAudio("assets/music.mp3");
 }
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   if (width > height){
@@ -1364,11 +1442,15 @@ function damageCalculator(attacker, defender, move, isBattle){
   let moddedAttack = statFormula(attacker.attack, attacker.statModifiers.attack);
   let moddedDefense = statFormula(defender.defense, defender.statModifiers.defense);
 
+  //Checks if a status based stat modifier should be applied.
   if (attacker.status === "Paralyzed"){
     attackerModdedSpeed *= 0.5;
   }
   if (defender.status === "Paralyzed"){
     defenderModdedSpeed *= 0.5;
+  }
+  if (attacker.status === "Burned"){
+    moddedAttack *= 0.5;
   }
   let criticalHitChance = 1;
   let damage;
@@ -1377,17 +1459,10 @@ function damageCalculator(attacker, defender, move, isBattle){
       return 0;
     }
   }
-  
+  //Runs the appropriate damage algorythm to the three move damage classes.
   if (move.category === physical){
     damage = Math.floor(
       Math.floor(42 * moddedAttack * move.power / moddedDefense) / 50);
-    if (attacker.status === "burned" && move.category === physical){
-      damage *= 0.5;
-    }
-      
-    // if (attacker.statModifiers.attack <=-1){
-    //   damage *= 1 + (attacker.statModifiers.attack * fix equation)
-    // }
   }
   else if (move.category === special){
     damage = Math.floor(
@@ -1450,7 +1525,6 @@ function damageCalculator(attacker, defender, move, isBattle){
       }
       
     }
-    
     if (!(move.effect[0] === 9 || move.effect[0] === 10)){
       //Runs the number through a percent generator to determine whether it will happen or not.
       if(move.effect[1]>=random(100)){
@@ -1493,6 +1567,7 @@ function damageCalculator(attacker, defender, move, isBattle){
           //8 Poisons defender
           newStatus = true;
           defender.status = "Poisoned";
+          
         }
         else if (move.effect[0] === 11){
           //Higher Critical Hit ratio
@@ -1554,16 +1629,17 @@ function damageCalculator(attacker, defender, move, isBattle){
           defender.leechSeed = true;
           return "boost";
         }
-        else if (move.effect[0] === 22){
+        else if (move.effect[0] === 22 && defender.status === 0){
           //Inflicts bad poison
-          defender.status === "Toxic";
-          newStatus === true;
+          newStatus = true;
+          defender.status = "Toxic";
+          defender.statusTimer = 0;
           return "boost";
         }
         else if (move.effect[0] === 23){
           //Trapped status
           if (defender.bound === false){
-            defender.boundTimer = Math.random(2, 5);
+            defender.boundTimer = Math.round(random(2, 5));
             newBound = true;
           }
           defender.bound = true;
@@ -1913,11 +1989,11 @@ function findBestDamage(attacker, defender){
   return highestDamage;
 }
 
-function findBestOffensivePokemon(attacker_party, defender){
+function findBestOffensivePokemon(attackerParty, defender){
   let highestDamageOutput = [0,-666];
   for (let i = 0; i<6; i++){
-    let damage = damageCalculator(attacker_party.base_list[i], defender, attacker_party.base_list[i].moves[findBestDamage(attacker_party.base_list[i], defender)], false);
-    if (damage > highestDamageOutput[0] && attacker_party.base_list[i].status !== "Fainted"){
+    let damage = damageCalculator(attackerParty.base_list[i], defender, attackerParty.base_list[i].moves[findBestDamage(attackerParty.base_list[i], defender)], false);
+    if (damage > highestDamageOutput[0] && attackerParty.base_list[i].status !== "Fainted"){
       highestDamageOutput[0] = damage;
       highestDamageOutput[1] = i;
     }
@@ -1928,7 +2004,7 @@ function findBestOffensivePokemon(attacker_party, defender){
   return highestDamageOutput[1];
 }
 
-function turnInProgress(player, cpu, player_attack, cpu_attack){
+function turnInProgress(player, cpu, playerAttack, cpuAttack){
   let turnDataLogs = [];
   let playerModdedSpeed = player.speed;
   let cpuModdedSpeed = cpu.speed;
@@ -1945,8 +2021,8 @@ function turnInProgress(player, cpu, player_attack, cpu_attack){
     }
   }
   //implement paralysis speed drop
-  if (player_attack.priority !== cpu_attack.priority){
-    if (player_attack.priority > cpu_attack.priority){
+  if (playerAttack.priority !== cpuAttack.priority){
+    if (playerAttack.priority > cpuAttack.priority){
       firstStrikeCPU = false;
     }
     else{
@@ -1966,25 +2042,25 @@ function turnInProgress(player, cpu, player_attack, cpu_attack){
 
   if (firstStrikeCPU === true){
     //CPU Moves first
-    let cpu_output = damageCalculator(cpu, player, cpu_attack, true);
+    let cpuOutput = damageCalculator(cpu, player, cpuAttack, true);
     //cpu attack
-    turnDataLogs.push(midTurnDataConfigure(cpu_output, cpu, player, cpu_attack));
+    turnDataLogs.push(midTurnDataConfigure(cpuOutput, cpu, player, cpuAttack));
 
     if (player.hp>0){
-      let player_output = damageCalculator(player, cpu, player_attack, true);
+      let playerOutput = damageCalculator(player, cpu, playerAttack, true);
       //player attack
-      turnDataLogs.push(midTurnDataConfigure(player_output, player, cpu, player_attack));
+      turnDataLogs.push(midTurnDataConfigure(playerOutput, player, cpu, playerAttack));
     }
   }
   else{
-    let player_output = damageCalculator(player, cpu, player_attack, true);
+    let playerOutput = damageCalculator(player, cpu, playerAttack, true);
     //player attack
-    turnDataLogs.push(midTurnDataConfigure(player_output, player, cpu, player_attack));
+    turnDataLogs.push(midTurnDataConfigure(playerOutput, player, cpu, playerAttack));
 
     if (cpu.hp>0){
-      let cpu_output = damageCalculator(cpu, player, cpu_attack, true);
+      let cpuOutput = damageCalculator(cpu, player, cpuAttack, true);
       //cpu attack
-      turnDataLogs.push(midTurnDataConfigure(cpu_output, cpu, player, cpu_attack));
+      turnDataLogs.push(midTurnDataConfigure(cpuOutput, cpu, player, cpuAttack));
     }
   }
   turnDataLogs.push(postTurnDataConfigure(player, cpu));
@@ -2097,6 +2173,11 @@ function midTurnDataConfigure(attackResult, attacker, defender, move){
       turnDataLogs.push(defender.name +" was seeded!");
       attacking === false;
     }
+
+    if (attackToUse.name === "Toxic"){
+      console.log("Toxic registered as selected attack.")
+      attacking = false;
+    }
   }
 
   if (typeof attackResult !== "number" && attackResult !== "missed"){ 
@@ -2208,11 +2289,9 @@ function midTurnDataConfigure(attackResult, attacker, defender, move){
 
 
 
-function postTurnDataConfigure(pokemon, pokemon_2){
+function postTurnDataConfigure(pokemon, pokemon2){
   let postTurnResults = [];
-  if (pokemon.status !== 0){
-    pokemon.statusTimer --;
-  }
+  pokemon.statusTimer --;
   pokemon.boundTimer --;
   if (pokemon.status === "Poisoned"){
     pokemon.hp -= Math.floor(pokemon.baseHP/8);
@@ -2241,7 +2320,7 @@ function postTurnDataConfigure(pokemon, pokemon_2){
   if (pokemon.bound === true){
     if (pokemon.boundTimer > 0){
       pokemon.hp -= Math.floor(pokemon.baseHP/8);
-      postTurnResults.push(pokemon.name+" was hurt by"+pokemon.boundBy+"! -"+Math.floor(pokemon.baseHP/8));
+      postTurnResults.push(pokemon.name+" was hurt by "+pokemon.boundBy+"! -"+Math.floor(pokemon.baseHP/8));
       let isDead = faintChecker(pokemon);
       if (typeof isDead === "string"){
         postTurnResults.push(isDead);
@@ -2255,11 +2334,11 @@ function postTurnDataConfigure(pokemon, pokemon_2){
   }
   if (pokemon.leechSeed === true){
     pokemon.hp -= Math.floor(pokemon.baseHP/8);
-    pokemon_2.hp += Math.floor(pokemon.baseHP/8);
-    if (pokemon_2.hp > pokemon_2.baseHP){
-      pokemon_2.hp = pokemon_2.baseHP;
+    pokemon2.hp += Math.floor(pokemon.baseHP/8);
+    if (pokemon2.hp > pokemon2.baseHP){
+      pokemon2.hp = pokemon2.baseHP;
     }
-    postTurnResults.push(pokemon.name+"'s health was sapped by Leech Seed! "+pokemon.name+" -"+Math.floor(pokemon.baseHP/8)+", "+pokemon_2.name+" +"+Math.floor(pokemon.baseHP/8));
+    postTurnResults.push(pokemon.name+"'s health was sapped by Leech Seed! "+pokemon.name+" -"+Math.floor(pokemon.baseHP/8)+", "+pokemon2.name+" +"+Math.floor(pokemon.baseHP/8));
     let isDead = faintChecker(pokemon);
     if (typeof isDead === "string"){
       postTurnResults.push(isDead);
@@ -2286,6 +2365,7 @@ function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
   let priorityCheck = [false, 0];
   let healCheck = [false, 0];
   let boostCheck = [false, 0];
+  let statusCheck = [false, 0];
   let hasKillMove = false;
   let bestKillMove = 0;
   let moveCanKill = [false, false, false, false];
@@ -2313,7 +2393,11 @@ function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
       boostCheck[0] = true;
       boostCheck[1] = i;
     }
-
+    if (cpu.moves[i].category === status && cpu.moves[i].name !== "Sleep Talk"){
+      statusCheck[0] = true;
+      statusCheck[1] = i;
+    }
+    
     if (cpu.moves[i].power !== 0){
       //Checks if any moves can kill
       if (damageCalculator(cpu, player, cpu.moves[i], false)>player.hp){
@@ -2377,13 +2461,20 @@ function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
 
 
   //Checks if it would be in kill range next turn (if it were faced with another CPU), and prepares to heal in response to avoid this
-  if (cpu.hp < 2*damageCalculator(player, cpu, player.moves[findBestDamage(player, cpu)], false) && playerSpeed > cpuSpeed && panicModeCounter < 10){
+  if (cpu.hp < 2*damageCalculator(player, cpu, player.moves[findBestDamage(player, cpu)], false) && playerSpeed > cpuSpeed && panicModeCounter < 5){
     if (healCheck[0] === true){
       panicModeCounter += 0.5;
       return cpu.moves[healCheck[1]];
     }
   }
 
+  //Checks if using stats
+  if (cpu.hp > cpu.baseHP*0.7 && (cpu.baseHP > 2*damageCalculator(player, cpu, player.moves[findBestDamage(player, cpu)], false)||playerSpeed > cpuSpeed||panicModeCounter > 5)){
+    if(statusCheck[0] === true && statusUsed === false){
+      statusUsed = true;
+      return cpu.moves[statusCheck[1]];
+    }
+  }
   //If near full health, it will use a boosting move
   if (cpu.hp > cpu.baseHP*0.7 && (cpu.baseHP > 2*damageCalculator(player, cpu, player.moves[findBestDamage(player, cpu)], false)||playerSpeed > cpuSpeed)){
     if(boostCheck[0] === true){
@@ -2602,6 +2693,7 @@ function pokemonSwitch(party, isPlayer, fainted){
     key = int(key);
   }
   if (isPlayer === true && readerBusy === false){
+    statusUsed === false;
     if (typeof key !== "number" && key !== " " && switchStarted === false){
       switchStarted === true;
     }
