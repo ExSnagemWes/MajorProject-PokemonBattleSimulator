@@ -8,13 +8,8 @@
 //https://www.spriters-resource.com/game_boy_advance/pokemonfireredleafgreen/sheet/3866/
 //line 255 damage equation copied and slightly modified for variables that would be predefined in this instance
 //The AI System is derived from my analysis of competetive play via play.pokemonshowdown.com| I have learned much about general and smart play, as well as bad, including predictive skills which I have mostly programmed onto this computer
-let playerParty;
-let data;
-let cpuParty;
-let activePlayer;
-let activeCPU;
-let backgroundMap;
-let trainerClasses = ["Hiker", "Youngster", "Beauty", "Trainer", "Bugcatcher", "Pokemaniac", "Triathlete", "Ninja", "Wanderer", "Gentleman", "Biker", "Hex Maniac"];
+let playerParty, data, cpuParty, activePlayer, activeCPU, backgroundMap, playerX, playerY, cpuX, cpuY, music, spriteScale;
+let trainerClasses = ["Hiker", "Youngster", "Beauty", "Trainer", "Bugcatcher", "Pokemaniac", "Triathlete", "Ninja", "Wanderer", "Gentleman", "Biker", "Hex Maniac", "Leader", "Boss", "Gambler", "Old Man",];
 let names = ["Todd", "Valerie", "Saidy", "Yash", "Sam", "Dave", "Kianna", "Mathew", "Vince", "Carl", "Billie", "Joanna", "Keanu", "Ike", "Natalia", "Taylor", "Emma", "Winston", "Wade", "James", "Kari", "Mark", "Bean", "Emilia", "Kenneth", "Nigel", "Cassandra", "Rias", "Lance", "Agatha", "Bruno", "Lorelei", "Wallace", "Brock", "Misty", "Lt. Surge", "Blaine", "Giovanni", "Jessie", "Erika", "Sabrina", "Koga"];
 let opponentName;
 let physical = "Physical";
@@ -25,6 +20,7 @@ let boost = "Boost/Cripple";
 let status = "Other";
 let newStatus = false;
 let newConfused = 0;
+let newBound = false;
 let gameMode = "HP";
 let panicModeCounter = 0;
 let readerBusy = true;
@@ -56,11 +52,6 @@ let flying = "Flying";
 let electric = "Electric";
 let none = "---";
 let critical = false;
-let playerX;
-let playerY;
-let cpuX;
-let cpuY;
-let spriteScale;
 let gameEnded = false;
 
 let movesList = {
@@ -84,6 +75,16 @@ let movesList = {
     category: special,
     priority: 0,
     effect: [0, 0]},
+
+  hyper_voice: {
+    name: "Hyper Voice",
+    type: normal, 
+    power: 90, 
+    accuracy: 100, 
+    pp: 10, 
+    category: special,
+    priority: 0,
+    effect: [0, 0]},
   
   hurricane: {
     name: "Hurricane",
@@ -95,6 +96,16 @@ let movesList = {
     priority: 0,
     effect: [1, 30]},
 
+  signal_beam: {
+    name: "Signal Beam",
+    type: bug,
+    power: 75,
+    accuracy: 100,
+    pp: 10,
+    category: special,
+    priority: 0,
+    effect: [1, 30]},
+  
   extreme_speed: {
     name: "Extreme Speed",
     type: normal,
@@ -135,6 +146,16 @@ let movesList = {
     priority: 0,
     effect: [3, 30]},
 
+  body_slam: {
+    name: "Body Slam",
+    type: normal,
+    power: 85,
+    accuracy: 100,
+    pp: 15,
+    category: physical,
+    priority: 0,
+    effect: [18, 30]},
+  
   fire_blast: {
     name: "Fire Blast",
     type: fire,
@@ -155,6 +176,16 @@ let movesList = {
     priority: 0,
     effect: [19, 100, 1]},
 
+  moonblast: {
+    name: "Moonblast",
+    type: fairy,
+    power: 95,
+    accuracy: 100,
+    pp: 10,
+    category: special,
+    priority: 0,
+    effect: [19, 30, 1]},
+  
   rock_slide: {
     name: "Rock Slide",
     type: rock,
@@ -195,6 +226,16 @@ let movesList = {
     priority: 0,
     effect: [5, 20]},
 
+  thunderbolt: {
+    name: "Thunderbolt",
+    type: electric,
+    power: 95,
+    accuracy: 100,
+    pp: 15,
+    category: special,
+    priority: 0,
+    effect: [18, 20]},
+  
   focus_blast: {
     name: "Focus Blast",
     type: fighting,
@@ -234,6 +275,7 @@ let movesList = {
     category: special,
     priority: 0,
     effect: [0,0]},
+
   psystrike: {
     name: "Psystrike",
     type: psychic,
@@ -274,6 +316,26 @@ let movesList = {
     priority: 0,
     effect: [6,20, 1]},
 
+  bug_buzz: {
+    name: "Bug Buzz",
+    type: bug,
+    power: 90,
+    accuracy: 100,
+    pp: 10,
+    category: special,
+    priority: 0,
+    effect: [6,20, 1]},
+
+  psychiC: {
+    name: "Psychic ",
+    type: psychic,
+    power: 90,
+    accuracy: 100,
+    pp: 10,
+    category: special,
+    priority: 0,
+    effect: [6,20, 1]},
+
   shadow_ball: {
     name: "Shadow Ball",
     type: ghost,
@@ -306,6 +368,16 @@ let movesList = {
 
   recover: {
     name: "Recover",
+    type: normal,
+    power: 0,
+    accuracy: 0,
+    pp: 10,
+    category: healing,
+    priority: 0,
+    effect: [2, 100]},
+
+  softboiled: {
+    name: "Soft-Boiled",
     type: normal,
     power: 0,
     accuracy: 0,
@@ -455,6 +527,26 @@ let movesList = {
     priority: 0,
     effect: [17, 100]},
 
+  leech_seed:{
+    name: "Leech Seed",
+    type: grass,
+    power: 0,
+    accuracy: 100, 
+    pp: 10, 
+    category: boost,
+    priority: 0,
+    effect: [21, 100]},
+
+  toxic:{
+    name: "Toxic",
+    type: poison,
+    power: 0,
+    accuracy: 90, 
+    pp: 10, 
+    category: boost,
+    priority: 0,
+    effect: [22, 100]},
+
   calm_mind:{
     name: "Calm Mind",
     type: psychic,
@@ -463,7 +555,38 @@ let movesList = {
     pp: 30, 
     category: boost,
     priority: 0,
-    effect: [20, 100]}
+    effect: [20, 100]},
+
+  infestation:{
+    name: "Infestation",
+    type: bug,
+    power: 20,
+    accuracy: 100, 
+    pp: 20, 
+    category: physical,
+    priority: 0,
+    effect: [23, 100]},
+  
+  sucker_punch: {
+    name: "Sucker Punch",
+    type: dark,
+    power: 70,
+    accuracy: 100,
+    pp: 5,
+    category: physical,
+    priority: 2,
+    effect: [-1,0]},
+
+  play_rough:{
+    name: "Play Rough",
+    type: fairy,
+    power: 90,
+    accuracy: 100,
+    pp: 15,
+    category: physical,
+    priority: 0,
+    effect: [11,100]}
+
 };
 
 
@@ -507,6 +630,7 @@ function preload(){
         movesList.extreme_speed, 
         movesList.roost]
     },
+
     garchomp: {
       name: "Garchomp",
       sprites: [loadImage("sprites/garchomp_front.png"), loadImage("sprites/garchomp_back.png")],
@@ -542,6 +666,7 @@ function preload(){
         movesList.iron_head,
         movesList.swords_dance]
     },
+
     charizard: {
       name: "Charizard",
       sprites: [loadImage("sprites/charizard_front.png"), loadImage("sprites/charizard_back.png")],
@@ -577,6 +702,7 @@ function preload(){
         movesList.air_slash,
         movesList.focus_blast]
     },
+
     blastoise: {
       name: "Blastoise",
       sprites: [loadImage("sprites/blastoise_front.png"), loadImage("sprites/blastoise_back.png")],
@@ -612,6 +738,7 @@ function preload(){
         movesList.ice_beam,
         movesList.aura_sphere]
     },
+
     venusaur: {
       name: "Venusaur",
       sprites: [loadImage("sprites/venusaur_front.png"), loadImage("sprites/venusaur_back.png")],
@@ -645,8 +772,9 @@ function preload(){
       moves: [movesList.synthesis,
         movesList.energy_ball,
         movesList.sludge_bomb,
-        movesList.venoshock]
+        movesList.leech_seed]
     },
+
     articuno: {
       name: "Articuno",
       sprites: [loadImage("sprites/articuno_front.png"), loadImage("sprites/articuno_back.png")],
@@ -682,6 +810,7 @@ function preload(){
         movesList.roost,
         movesList.freeze_dry]
     },
+
     tyranitar: {
       name: "Tyranitar",
       sprites: [loadImage("sprites/tyranitar_front.png"), loadImage("sprites/tyranitar_back.png")],
@@ -717,6 +846,7 @@ function preload(){
         movesList.avalanche, 
         movesList.earthquake]
     },
+
     aggron: {
       name: "Aggron",
       sprites: [loadImage("sprites/aggron_front.png"), loadImage("sprites/aggron_back.png")],
@@ -752,6 +882,7 @@ function preload(){
         movesList.rest, 
         movesList.sleep_talk]
     },
+
     heracross: {
       name: "Heracross",
       sprites: [loadImage("sprites/heracross_front.png"), loadImage("sprites/heracross_back.png")],
@@ -787,6 +918,7 @@ function preload(){
         movesList.swords_dance, 
         movesList.close_combat]
     },
+
     gengar: {
       name: "Gengar",
       sprites: [loadImage("sprites/gengar_front.png"), loadImage("sprites/gengar_back.png")],
@@ -822,6 +954,7 @@ function preload(){
         movesList.focus_blast, 
         movesList.dazzling_gleam]
     },
+
     zapdos: {
       name: "Zapdos",
       sprites: [loadImage("sprites/zapdos_front.png"), loadImage("sprites/zapdos_back.png")],
@@ -856,7 +989,9 @@ function preload(){
         movesList.thunder, 
         movesList.roost, 
         movesList.thunder_wave]
+    
     },
+
     moltres: {
       name: "Moltres",
       sprites: [loadImage("sprites/moltres_front.png"), loadImage("sprites/moltres_back.png")],
@@ -892,6 +1027,7 @@ function preload(){
         movesList.roost, 
         movesList.mystical_fire]
     },
+
     mewtwo: {
       name: "Mewtwo",
       sprites: [loadImage("sprites/mewtwo_front.png"), loadImage("sprites/mewtwo_back.png")],
@@ -926,10 +1062,264 @@ function preload(){
         movesList.recover, 
         movesList.ice_beam, 
         movesList.calm_mind]
+    },
+     
+    snorlax: {
+      name: "Snorlax",
+      sprites: [loadImage("sprites/snorlax_front.png"), loadImage("sprites/snorlax_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 524,
+      hp: 524,
+      attack: 350,
+      defense: 166,
+      sp_atk: 149,
+      sp_def: 257,
+      speed: 96,
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type1: normal,
+      type2: none,
+      moves: [movesList.body_slam, 
+        movesList.crunch, 
+        movesList.rest, 
+        movesList.sleep_talk]
+    },
+    
+    blissey: {
+      name: "Blissey",
+      sprites: [loadImage("sprites/blissey_front.png"), loadImage("sprites/blissey_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 651,
+      hp: 651,
+      attack: 22,
+      defense: 130,
+      sp_atk: 187,
+      sp_def: 369,
+      speed: 115,
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type1: normal,
+      type2: none,
+      moves: [movesList.softboiled, 
+        movesList.toxic, 
+        movesList.hyper_voice, 
+        movesList.shadow_ball]
+    },
+    
+    shuckle: {
+      name: "Shuckle",
+      sprites: [loadImage("sprites/shuckle_front.png"), loadImage("sprites/shuckle_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 243,
+      hp: 243,
+      attack: 58,
+      defense: 496,
+      sp_atk: 22,
+      sp_def: 614,
+      speed: 46,
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type1: bug,
+      type2: rock,
+      moves: [movesList.infestation, 
+        movesList.toxic, 
+        movesList.rest, 
+        movesList.curse]
+    },
+    
+    gardevoir: {
+      name: "Gardevoir",
+      sprites: [loadImage("sprites/gardevoir_front.png"), loadImage("sprites/gardevoir_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 277,
+      hp: 277,
+      attack: 121,
+      defense: 166,
+      sp_atk: 349,
+      sp_def: 267,
+      speed: 284,
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type1: psychic,
+      type2: fairy,
+      moves: [movesList.psychiC, 
+        movesList.moonblast, 
+        movesList.shadow_ball, 
+        movesList.thunderbolt]
+    },
+    
+    snom: {
+      name: "Snom",
+      sprites: [loadImage("sprites/snom_front.png"), loadImage("sprites/snom_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 263,
+      hp: 263,
+      attack: 57,
+      defense: 159,
+      sp_atk: 243,
+      sp_def: 149,
+      speed: 68,
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type1: bug,
+      type2: ice,
+      moves: [movesList.psychiC, 
+        movesList.ice_beam, 
+        movesList.dazzling_gleam, 
+        movesList.bug_buzz]
+    },
+  
+    jolteon: {
+      name: "Jolteon",
+      sprites: [loadImage("sprites/jolteon_front.png"), loadImage("sprites/jolteon_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 271,
+      hp: 271,
+      attack: 121,
+      defense: 156,
+      sp_atk: 319,
+      sp_def: 227,
+      speed: 394,
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0
+      },
+      type1: electric,
+      type2: none,
+      moves: [movesList.thunderbolt, 
+        movesList.thunder_wave, 
+        movesList.signal_beam, 
+        movesList.shadow_ball]
+    },
+
+    absol: {
+      name: "Absol",
+      sprites: [loadImage("sprites/absol_front.png"), loadImage("sprites/absol_back.png")],
+      status: 0,
+      bound: false,
+      boundBy: none,
+      boundTimer: 0,
+      confused: false,
+      confusedTimer: 0,
+      leechSeed: false,
+      // item: 0,
+      // ability: 0,
+      flinch: false,
+      statusTimer: 0,
+      baseHP: 271,
+      hp: 271,
+      attack: 394,
+      defense: 156,
+      sp_atk: 167,
+      sp_def: 157,
+      speed: 249,
+      statModifiers: {
+        attack: 0,
+        defense: 0,
+        sp_atk: 0,
+        sp_def: 0,
+        speed: 0,
+      },
+      type1: dark,
+      type2: fairy,
+      moves: [movesList.sucker_punch, 
+        movesList.swords_dance, 
+        movesList.play_rough, 
+        movesList.close_combat]
     }
+
   };
-  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres, pokemon.mewtwo];
+  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres, pokemon.mewtwo, pokemon.snorlax, pokemon.blissey, pokemon.shuckle, pokemon.gardevoir, pokemon.snom, pokemon.jolteon, pokemon.absol];
   backgroundMap = random([loadImage("backgrounds/back_0.png"), loadImage("backgrounds/back_1.png"), loadImage("backgrounds/back_2.png"), loadImage("backgrounds/back_3.png"), loadImage("backgrounds/back_4.png"), loadImage("backgrounds/back_5.png"), loadImage("backgrounds/back_6.png"), loadImage("backgrounds/back_7.png"), loadImage("backgrounds/back_8.png"), loadImage("backgrounds/back_9.png")]);
+  music = createAudio("assets/music.mp3");
 }
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -956,6 +1346,7 @@ function setup() {
 }
 
 function draw() {
+  music.play();
   //background(130, 255, 100);
   image(backgroundMap, width/2, height/2, width, height);
   battleInterface();
@@ -1070,54 +1461,55 @@ function damageCalculator(attacker, defender, move, isBattle){
           defender.confusedTimer = random(2,5);
           newConfused = 1;
         }
-        if (move.effect[0] === 2){
+        else if (move.effect[0] === 2){
           //2 Heals 1/2 Max Health
           return "healed";
         }
-        if (move.effect[0] === 3){
+        else if (move.effect[0] === 3){
           //3 Flinches defender
           defender.flinch = true;
         }
         
-        if (move.effect[0] === 4){
+        else if (move.effect[0] === 4){
           //4 Increases Attack
           attacker.statModifiers.attack += move.effect[2];
           return "boost";
         }
-        if (move.effect[0] === 5 && defender.status === 0 && (defender.type1 !== fire && defender.type2 !== fire)){
+        else if (move.effect[0] === 5 && defender.status === 0 && (defender.type1 !== fire && defender.type2 !== fire)){
           //5 Burns defender
           newStatus = true;
           defender.status = "Burned";
         }
-        if (move.effect[0] === 6){
+        else if (move.effect[0] === 6){
           //6 Lowers Sp. Def of defender
           defender.statModifiers.sp_def - move.effect[2];
         }
-        if (move.effect[0] === 7 && defender.status === 0 && defender.type1 !== ice && defender.type2 !== ice){
+        else if (move.effect[0] === 7 && defender.status === 0 && defender.type1 !== ice && defender.type2 !== ice){
           //7 Freezes defender
           newStatus = true;
           defender.status = "Frozen";
         }
-        if (move.effect[0] === 8 && defender.status === 0 && !(defender.type1 === poison || defender.type2 === steel) && !(defender.type2 === poison || defender.type1 === steel)){
+        else if (move.effect[0] === 8 && defender.status === 0 && !(defender.type1 === poison || defender.type2 === steel) && !(defender.type2 === poison || defender.type1 === steel)){
           //8 Poisons defender
           newStatus = true;
           defender.status = "Poisoned";
         }
-        if (move.effect[0] === 11){
+        else if (move.effect[0] === 11){
           //Higher Critical Hit ratio
           criticalHitChance ++;
         }
-        if (move.effect[0] === 12){
+        else if (move.effect[0] === 12){
           //- Defense
           defender.statModifiers.defense - move.effect[2];
         }
-        if (move.effect[0] === 13){
+        else if (move.effect[0] === 13){
           //Doubles Damage if user is slower
           if (attackerModdedSpeed < defenderModdedSpeed){
             damage *= 2;
           }
         }    
-        if (move.effect[0] === 14){
+        else if (move.effect[0] === 14){
+          //rest
           if (attacker.status !== "Sleeping"){
             attacker.statusTimer = 2;
             attacker.status = "Sleeping";
@@ -1125,35 +1517,58 @@ function damageCalculator(attacker, defender, move, isBattle){
           }
           return "rest";
         }
-        if (move.effect[0] === 15){
+        else if (move.effect[0] === 15){
           //Sleep Talk
           return "sleep talk";
         }
-        if (move.effect[0] === 16){
+        else if (move.effect[0] === 16){
           //Close Combat Stat Drops
           attacker.statModifiers.defense --;
           attacker.statModifiers.sp_def --;
         }
-        if (move.effect[0] === 17){
+        else if (move.effect[0] === 17){
+          //+Atk, Def, -Speed
           attacker.statModifiers.attack ++;
           attacker.statModifiers.defense ++;
           attacker.statModifiers.speed --;
           return "boost";
         }
-        if (move.effect[0] === 18 &&(defender.type1 !== electric && defender.type2 !== electric)){
+        else if (move.effect[0] === 18 &&(defender.type1 !== electric && defender.type2 !== electric)){
           //The Target becomes paralyzed
           newStatus = true;
           defender.status = "Paralyzed";
           return "boost";
         } 
-        if (move.effect[0] === 19){
+        else if (move.effect[0] === 19){
           //Lowers the Special Attack stat
           defender.statModifiers.sp_atk -= move.effect[2];
         }   
-        if (move.effect[0] === 20){
+        else if (move.effect[0] === 20){
+          //Increases Sp. Atk, Sp. Def
           attacker.statModifiers.sp_def ++;
           attacker.statModifiers.sp_atk ++;
           return "boost";
+        }
+        else if (move.effect[0] === 21){
+          //Inflicts Leech Seed draining
+          defender.leechSeed = true;
+          return "boost";
+        }
+        else if (move.effect[0] === 22){
+          //Inflicts bad poison
+          defender.status === "Toxic";
+          newStatus === true;
+          return "boost";
+        }
+        else if (move.effect[0] === 23){
+          //Trapped status
+          if (defender.bound === false){
+            defender.boundTimer = Math.random(2, 5);
+            newBound = true;
+          }
+          defender.bound = true;
+          defender.boundBy = move.name;
+          
         }
       }
     } 
@@ -1461,6 +1876,15 @@ function effectDescriptions(effectData){
   if (effectData[0] === 20){
     return "Raises the user's Special Attack and Special Defense.";
   }
+  if (effectData[0] === 21){
+    return "Plants seeds which slowly drain HP from target.";
+  }
+  if (effectData[0] === 22){
+    return "Inflicts a terrible poison that will worsen over time.";
+  }
+  if (effectData[0] === 23){
+    return "Binds and traps the opponent, dealing 1/8 of their\nmaximum HP for 2-5 turns.";
+  }
 }
 function freezeDryCheck(defender){
   if (defender.type1 === water || defender.type2 === water){
@@ -1571,7 +1995,7 @@ function turnInProgress(player, cpu, player_attack, cpu_attack){
   }
 
   if (player.status === "Fainted"){
-    turnDataLogs.push("Select your next Pokemon");
+    turnDataLogs.push("Select your next Pokemon (press the number of the slot)");
   }
 
   return turnDataLogs;
@@ -1608,6 +2032,7 @@ function midTurnDataConfigure(attackResult, attacker, defender, move){
 
   if (attackResult === "sleep talk"){
     if (attacker.status === "Sleeping"){
+      turnDataLogs.push(attacker.name + " used Sleep Talk!");
       sleepTalking = true;
       attacking = true;
       attackToUse = attacker.moves[Math.round(random(2))];
@@ -1666,6 +2091,10 @@ function midTurnDataConfigure(attackResult, attacker, defender, move){
       attacking = false;
     }
     if (attackToUse.name === "Thunder Wave"){
+      attacking === false;
+    }
+    if (attackToUse.name === "Leech Seed"){
+      turnDataLogs.push(defender.name +" was seeded!");
       attacking === false;
     }
   }
@@ -1740,10 +2169,18 @@ function midTurnDataConfigure(attackResult, attacker, defender, move){
       }
     }
   }
-  if (newStatus === true && defender.hp !== 0){
-    turnDataLogs.push(defender.name+" was "+defender.status+"!");
-    if (defender.status === "Paralyzed"){
-      turnDataLogs.push("It may be unable to move!");
+  if (newBound === true){
+    turnDataLogs.push(defender.name+" became trapped by "+attackToUse.name+"!");
+  }
+  if (newStatus === true && defender.hp > 0){
+    if (defender.status !== "Toxic"){
+      turnDataLogs.push(defender.name+" was "+defender.status+"!");
+      if (defender.status === "Paralyzed"){
+        turnDataLogs.push("It may be unable to move!");
+      }
+    }
+    else{
+      turnDataLogs.push(defender.name+" was badly poisoned!");
     }
     newStatus = false;
   }
@@ -1779,7 +2216,7 @@ function postTurnDataConfigure(pokemon, pokemon_2){
   pokemon.boundTimer --;
   if (pokemon.status === "Poisoned"){
     pokemon.hp -= Math.floor(pokemon.baseHP/8);
-    postTurnResults.push(pokemon.name+" is poisoned!"+Math.floor(pokemon.baseHP/8));
+    postTurnResults.push(pokemon.name+" is poisoned! -"+Math.floor(pokemon.baseHP/8));
     let isDead = faintChecker(pokemon);
     if (typeof isDead === "string"){
       postTurnResults.push(isDead);
@@ -1793,7 +2230,7 @@ function postTurnDataConfigure(pokemon, pokemon_2){
       postTurnResults.push(isDead);
     }
   }
-  if (pokemon.status === "Badly Poisoned"){
+  if (pokemon.status === "Toxic"){
     pokemon.hp -= Math.floor(pokemon.baseHP/16*-pokemon.statusTimer);
     postTurnResults.push(pokemon.name+" is badly poisoned! -"+Math.floor(pokemon.baseHP/16*-pokemon.statusTimer));
     let isDead = faintChecker(pokemon);
@@ -1819,6 +2256,9 @@ function postTurnDataConfigure(pokemon, pokemon_2){
   if (pokemon.leechSeed === true){
     pokemon.hp -= Math.floor(pokemon.baseHP/8);
     pokemon_2.hp += Math.floor(pokemon.baseHP/8);
+    if (pokemon_2.hp > pokemon_2.baseHP){
+      pokemon_2.hp = pokemon_2.baseHP;
+    }
     postTurnResults.push(pokemon.name+"'s health was sapped by Leech Seed! "+pokemon.name+" -"+Math.floor(pokemon.baseHP/8)+", "+pokemon_2.name+" +"+Math.floor(pokemon.baseHP/8));
     let isDead = faintChecker(pokemon);
     if (typeof isDead === "string"){
@@ -1849,6 +2289,7 @@ function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
   let hasKillMove = false;
   let bestKillMove = 0;
   let moveCanKill = [false, false, false, false];
+  let hasSleepTalk = false;
 
   
   
@@ -1891,8 +2332,14 @@ function aiMoveSelect(cpu, player, cpuSpeed, playerSpeed){
 
       }
     }
-  }
 
+    if (cpu.moves[i].name === "Sleep Talk"){
+      hasSleepTalk = true;
+    }
+  }
+  if (cpu.status === "Sleeping" && hasSleepTalk === true){
+    return movesList.sleep_talk;
+  }
 
   //Checks if a) The Computer can attack before the player, b) It has the ability to Faint the player| If it can land a blow to KO the player, it will. This plays off of later AI commands. This
   if (cpuSpeed > playerSpeed && hasKillMove === true || priorityCheck[0] === true && moveCanKill[priorityCheck[1]]){
@@ -2226,11 +2673,13 @@ class Party {
     strokeWeight(0.5);
     fill("black");
     let offset = y;
+    //Scrolls through the party, displaying the information about the Pokemon, and a mini srpite in case they are uncertain to which pokemon is theirs
     for (let i = 0; i<temporaryPartyList.length; i++){
       textFont("Courier New");
       //image(temporaryPartyList[i].sprites[1], x-80, offset, 80, 80)
       textStyle(BOLD);
       text(temporaryPartyList[i].name+ "       Lvl. 100", x, offset-10);
+      image(temporaryPartyList[i].sprites[0], x+90, offset-7, 24, 24);
       text("HP:  "+temporaryPartyList[i].hp+"/"+temporaryPartyList[i].baseHP, x+110, offset+5);
       text(temporaryPartyList[i].statModifiers.attack+" Attack:  "+temporaryPartyList[i].attack, x+90, offset+15);
       text(temporaryPartyList[i].statModifiers.defense+" Defense: "+temporaryPartyList[i].defense, x+90, offset+25);
