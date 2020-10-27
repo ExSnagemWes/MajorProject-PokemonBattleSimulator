@@ -1508,7 +1508,7 @@ function preload(){
 
     hydreigon: {
       name: "Hydreigon",
-      //sprites: [loadImage("sprites/hydreigon_front.png"), loadImage("sprites/hydreigon_back.png")],
+      sprites: [loadImage("sprites/hydreigon_front.png"), loadImage("sprites/hydreigon_back.png")],
       status: 0,
       bound: false,
       boundBy: none,
@@ -1544,7 +1544,7 @@ function preload(){
 
   };
   //Allows searching through defined Pokemon
-  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres, pokemon.mewtwo, pokemon.snorlax, pokemon.blissey, pokemon.shuckle, pokemon.gardevoir, pokemon.snom, pokemon.jolteon, pokemon.absol, pokemon.golisopod, pokemon.ferrothorn];
+  pokemonList = [pokemon.dragonite, pokemon.garchomp, pokemon.charizard, pokemon.blastoise, pokemon.venusaur, pokemon.articuno, pokemon.zapdos, pokemon.tyranitar, pokemon.aggron, pokemon.heracross, pokemon.gengar, pokemon.moltres, pokemon.mewtwo, pokemon.snorlax, pokemon.blissey, pokemon.shuckle, pokemon.gardevoir, pokemon.snom, pokemon.jolteon, pokemon.absol, pokemon.golisopod, pokemon.ferrothorn, pokemon.hydreigon];
   
   //Selects a random Background
   backgroundMap = random([loadImage("backgrounds/back_0.png"), loadImage("backgrounds/back_1.png"), loadImage("backgrounds/back_2.png"), loadImage("backgrounds/back_3.png"), loadImage("backgrounds/back_4.png"), loadImage("backgrounds/back_5.png"), loadImage("backgrounds/back_6.png"), loadImage("backgrounds/back_7.png"), loadImage("backgrounds/back_8.png"), loadImage("backgrounds/back_9.png")]);
